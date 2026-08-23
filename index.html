@@ -14,7 +14,11 @@
     body{font-family:'Raleway',Arial,sans-serif;max-width:950px;margin:0 auto;padding:100px 20px 140px;color:#fff;background:#000}
     h1{margin:0 0 6px;font-size:30px;color:var(--pink);font-weight:800}.intro{color:rgba(255,255,255,.65);margin-bottom:20px}
     .site-divider{border-top:1px dashed rgba(255,255,255,.3);margin:0 0 22px}
-    h2{font-size:21px;margin:28px 0 12px}.stepbar{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:16px 20px;margin:0;background:#000;border-bottom:2px solid var(--pink);z-index:110}.stepbar-brand{display:flex;flex-direction:column;align-items:flex-start;gap:3px;flex-shrink:0;margin-right:8px;text-decoration:none}.stepbar-back-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.6);white-space:nowrap;transition:color .15s}#stepbarLogoLink:hover .stepbar-back-label{color:rgba(255,255,255,.9)}.stepbar-steps{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;flex:1}.step{padding:11px 22px;border-radius:24px;background:rgba(255,255,255,.12);color:#ddd;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap}.step.active{background:var(--pink);color:#000}.stepbar-logo{height:38px;width:auto;transition:opacity .15s}#stepbarLogoLink:hover .stepbar-logo{opacity:.8}
+    h2{font-size:21px;margin:28px 0 12px}.stepbar{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:16px 20px;margin:0;background:#000;border-bottom:2px solid var(--pink);z-index:110}.stepbar-brand{display:none}.stepbar-steps{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;flex:1}.step{padding:11px 22px;border-radius:24px;background:rgba(255,255,255,.12);color:#ddd;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap}.step.active{background:var(--pink);color:#000}.step-num::after{content:" \00b7 "}
+    .loading-indicator{display:flex;align-items:center;gap:6px;color:var(--pink);font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;flex-shrink:0}
+    .loading-indicator.hidden-force{display:none!important}
+    .loading-spinner{width:11px;height:11px;border:2px solid rgba(243,140,170,.3);border-top-color:var(--pink);border-radius:50%;display:inline-block;animation:loadingSpin .6s linear infinite}
+    @keyframes loadingSpin{to{transform:rotate(360deg)}}
     .panel{border:1px solid #ddd;border-radius:12px;padding:18px;margin-bottom:18px;background:#fff;color:var(--black)}.panel.hidden{display:none}.hidden{display:none}
     label{display:block;font-weight:bold;margin:0 0 7px}.field{margin-bottom:13px}input,select{padding:11px 13px;border-radius:8px;border:1px solid #ccc;width:100%;background:#fff;font-size:16px}button{font:inherit}
     .primary,.secondary,.danger{padding:11px 16px;border-radius:24px;cursor:pointer;border:1px solid #000}.primary{background:#000;color:#fff}.secondary{background:#fff;color:#000}.danger{background:#fff;color:#a00000;border-color:#a00000}.primary:disabled,.secondary:disabled{opacity:.45;cursor:not-allowed}
@@ -45,10 +49,10 @@
     .clothing-cart-summary-row .ccs-label{flex:1}
     .clothing-cart-remove{border:0;background:none;color:#a00000;font-size:18px;font-weight:bold;line-height:1;cursor:pointer;padding:0 2px}
     .clothing-cart-remove:hover{color:#700}
-    .filters{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}.filter-button{border:1px solid #999;background:#fff;color:#000;padding:9px 14px;border-radius:24px;cursor:pointer;font-size:14px}.filter-button.active{background:#000;color:#fff;border-color:#000}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}.filter-button{border:2px solid #000;background:#fff;color:#000;padding:9px 14px;border-radius:24px;cursor:pointer;font-size:14px}.filter-button.active{background:#fff;color:#000;border-color:var(--pink);box-shadow:0 0 0 2px rgba(243,140,170,.4)}
     .credits-sidebar{display:none;position:fixed;top:230px;left:calc(50% + 499px);width:190px;flex-direction:column;gap:14px;z-index:90}.credits-sidebar.visible{display:flex}.credits-sidebar-title{font-size:13px;font-weight:bold;color:#fff;text-align:center;margin-bottom:2px}.credits-sidebar-box{border:2px solid #000;border-radius:12px;padding:18px 12px;text-align:center;background:#fff;color:var(--black)}.credits-sidebar-count{font-size:32px;font-weight:800}.credits-sidebar-label{font-size:12px;color:#666;margin-top:4px}.credits-sidebar-box.credits-short{border-color:#c0392b;background:#fff1f1}.credits-sidebar-box.credits-short .credits-sidebar-count{color:#c0392b}.credits-short-msg{font-size:10px;font-weight:bold;color:#c0392b;margin-top:6px;line-height:1.3}
     @media(max-width:1440px){.credits-sidebar{display:none!important}}
-    /* Small fixed live-cart preview for the Shop step on wide screens —
+    /* Small fixed live-cart preview for the Shop step on wide screens ‚Äî
        sits below the check-out widget (which can run to ~3 lines when
        something's already pending) so the two never overlap, and mirrors
        the same cart data as the bigger overview at the bottom of the page
@@ -65,7 +69,7 @@
     @media(max-width:1440px){.clothing-sidebar{display:none!important}}
     /* Fallback for medium and narrow screens, where the fixed sidebar has
        no room: the same three boxes, but inline (scrolls with the page,
-       not sticky) just under the filter row — this is where the counts
+       not sticky) just under the filter row ‚Äî this is where the counts
        used to live before the sidebar existed. */
     .credits-inline{display:none;margin:14px 0 22px}
     .credits-inline-title{font-size:13px;font-weight:bold;color:#000;margin-bottom:8px}
@@ -79,20 +83,11 @@
     .session.full-session{cursor:default}.session.full-session .session-main{filter:grayscale(1);opacity:.65}.full-badge.waitlisted-badge{background:var(--pink);color:#000}.session.booked-session{cursor:default}.session-main{flex:1;min-width:0}.session-type{font-weight:bold;font-size:14px}.session-info,.availability{font-size:12px;margin-top:2px;opacity:.8}.availability{font-size:11px}.booked-badge,.full-badge{display:inline-block;font-size:10px;font-weight:bold;padding:2px 8px;border-radius:8px;color:#176b39;white-space:nowrap;margin-top:3px}.booked-badge{background:#c8ecd5}.full-badge{background:#555;color:#fff}.session-check{width:18px;height:18px;flex-shrink:0;cursor:pointer}
     .session-cancel{padding:6px 12px;font-size:12px;flex-shrink:0;white-space:nowrap}.session-cancel-note{font-size:11px;color:inherit;opacity:.75;max-width:130px;text-align:right;flex-shrink:0}
     .mine-note{font-size:12px;color:#666;margin:0 0 14px;padding:10px 12px;background:#f7f7f7;border-radius:8px}
-    .filter-button.mine-filter{border:2px solid var(--pink)}.filter-button.mine-filter.active{background:var(--pink);color:#000;border-color:var(--pink)}
-    /* Filter pills colored like their matching session-card theme, so
-       "7AM Club" reads black+pink, "Talent Sessions" reads pink-bordered
-       white, "IDP Sessions" reads black-bordered white, even before
-       picking one — selecting one then "lights it up" with a glow ring,
-       echoing the highlighted state of a selected package chip in
-       Formules, instead of just inverting to black/white like a plain
-       filter. */
-    .filter-button.filter-7am{background:#000;color:var(--pink);border-color:#000}
-    .filter-button.filter-7am.active{background:#000;color:var(--pink);border-color:var(--pink);box-shadow:0 0 0 2px rgba(243,140,170,.5)}
-    .filter-button.filter-talent{background:#fff;color:#000;border-color:var(--pink)}
-    .filter-button.filter-talent.active{background:#fff;color:#000;border-color:var(--pink);box-shadow:0 0 0 2px rgba(243,140,170,.4)}
-    .filter-button.filter-idp{background:#fff;color:#000;border-color:#000}
-    .filter-button.filter-idp.active{background:#fff;color:#000;border-color:#000;box-shadow:0 0 0 2px rgba(0,0,0,.3)}
+    /* All 6 filter pills (Mijn sessies/Alle sessies/7AM Club/Talent
+       Sessions/IDP Sessions/Holiday Series) now share one plain
+       white/black look at rest, lighting up with the same pink outline
+       on selection ‚Äî simpler and more consistent than the old per-theme
+       coloring, which read inconsistently against a white embed panel. */
     .message{padding:11px 13px;border-radius:8px;margin:12px 0;font-size:14px}.message.success{background:#eef8f1;color:var(--green)}.booking-confirmation{position:fixed;left:20px;right:20px;bottom:96px;max-width:910px;margin:0 auto;z-index:150;box-shadow:0 8px 28px rgba(0,0,0,.2);padding:16px 40px 16px 18px;border:2px solid #1f8f4d;border-radius:10px;background:#eef8f1}.booking-confirmation h3{margin:0 0 8px;font-size:18px;color:#176b39}.booking-confirmation p{margin:4px 0;color:#176b39}.booking-confirmation ul{margin:8px 0 0 18px;padding:0;color:#176b39}.booking-confirmation-close{position:absolute;top:10px;right:12px;border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:#176b39}.message.error{background:#fff1f1;color:var(--red)}.message.info{background:#f5f5f5;color:#333}
     .selection-message{margin-top:6px;font-size:13px;font-weight:bold}.selection-message.info{color:rgba(255,255,255,.8);font-weight:normal}.selection-message.error{color:#ff9a9a}.selection-message.success{color:var(--pink)}
     .selection{position:fixed;bottom:0;left:0;right:0;background:#000;border-top:2px solid var(--pink);padding:14px 20px;z-index:100}.selection-inner{max-width:950px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:20px}.selection-count{font-weight:bold;color:#fff}.selection-list{color:rgba(255,255,255,.65);font-size:13px;margin-top:4px;line-height:1.5}.selection-actions{display:flex;align-items:center;min-width:220px}.confirm-button{padding:13px 20px;border:2px solid #000;border-radius:24px;background:#fff;color:#000;cursor:pointer;white-space:nowrap;font-size:15px;font-weight:bold;width:100%}.confirm-button:disabled{background:#eee;color:#999;border-color:#ccc;cursor:not-allowed}.booking-confirmation-checkout{margin-top:12px;width:100%;padding:12px 16px;border:2px solid #000;border-radius:24px;background:transparent;color:#000;font-weight:bold;font-size:14px;cursor:pointer}.booking-confirmation-checkout:disabled{opacity:.6;cursor:not-allowed}
@@ -101,7 +96,7 @@
     .checkout-section{margin-bottom:18px}.checkout-section h4{margin:0 0 8px;font-size:15px}.checkout-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #eee;font-size:14px}.checkout-total{display:flex;justify-content:space-between;font-weight:bold;font-size:16px;padding:10px 0}
     /* Single persistent check-out control, always reachable regardless of
        which section (Formules/Shop/Mijn Planning) the customer is on, with
-       a small running overview of what's currently pending underneath —
+       a small running overview of what's currently pending underneath ‚Äî
        replaces the old per-section "check out" buttons that appeared only
        inside each confirmed box. Fixed top-right on wide/medium screens;
        folds into the normal page flow (a slim inline card) on narrow
@@ -112,10 +107,17 @@
     .checkout-widget-summary{margin-top:8px;font-size:11px;line-height:1.6;color:#333}
     .checkout-widget-row{display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
     .checkout-widget-row span{opacity:.75}
-    @media(max-width:1100px){.checkout-widget{position:static;width:100%;max-width:280px;margin:0 0 14px auto;box-shadow:none}}
+    /* Used to fall back to position:static (scrolling away with the page)
+       below 1100px ‚Äî but embedded in the Carrd iframe, the available width
+       is capped by the surrounding page's content column and rarely if
+       ever reaches 1100px even on desktop, so that fallback was engaging
+       unconditionally and the check-out control was never reachable while
+       scrolling a long calendar. Kept fixed at every width instead; only
+       the narrower phone-specific layout below (max-width:700px) still
+       overrides position for a full-width band under the stepbar. */
     @media(max-width:700px){
-      body{padding:172px 18px 190px;font-size:16px}
-      .stepbar{gap:8px;padding:12px 14px}.stepbar-logo{height:26px}.stepbar-steps{gap:8px}.stepbar-back-label{font-size:9px}.step{padding:9px 14px;font-size:13px}
+      body{padding:110px 18px 190px;font-size:16px}
+      .stepbar{gap:8px;padding:10px 14px}.stepbar-steps{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}.step{padding:7px 6px;font-size:11px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}.step-num::after{content:none}
       .form-grid,.package-grid,.clothing-grid{grid-template-columns:1fr}.triple-field-row{flex-direction:column;gap:8px}.triple-field-row>*{width:100%}
       .player-row{align-items:stretch;flex-direction:column}.new-player-toggle{width:100%}
       .selection-inner{align-items:stretch;flex-direction:column;gap:10px}.selection-actions{width:100%}
@@ -125,12 +127,12 @@
       .confirmed-actions{flex-direction:column}.confirmed-actions>button{flex-basis:auto}
       /* Stays fixed (not static/in-flow like the 700-1100px tablet range
          above) so it's reachable while scrolling a long calendar or
-         package list on an actual phone — pinned just under the stepbar,
+         package list on an actual phone ‚Äî pinned just under the stepbar,
          capped height with its own internal scroll so it can never grow
          tall enough to swallow the whole screen even with every section
          (Formules/Shop/Planning/Geannuleerd) pending at once. */
-      .checkout-widget{position:fixed;top:106px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:170px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-      /* Package/clothing cards already stack single-column above — this is
+      .checkout-widget{position:fixed;top:92px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:170px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+      /* Package/clothing cards already stack single-column above ‚Äî this is
          the readability/touch-target pass on top: bigger text, roomier
          buttons, and no more dead space in short package cards now that
          they're full-width instead of squeezed into a 3-up grid. */
@@ -171,12 +173,12 @@
   <!--
     Google wraps unreviewed Apps Script web apps (the blue "Deze app is
     gemaakt door..." banner) in a content frame that is forced to a fixed
-    width (observed 980-1280px, varies) regardless of the visiting device —
+    width (observed 980-1280px, varies) regardless of the visiting device ‚Äî
     so the @media query above never engages on an actual phone, because as
     far as our own page can tell, its container really is that wide.
     window.screen (the real physical display) isn't affected by that fake
     frame width. This used to flip a <style media="not all"> block to
-    media="all" to activate a duplicate set of mobile rules — switched to a
+    media="all" to activate a duplicate set of mobile rules ‚Äî switched to a
     plain class on <html> instead, toggled via classList, since that's the
     most basic, unambiguous CSS mechanism there is: no dependence on a
     browser correctly re-evaluating a stylesheet's applicability after its
@@ -193,8 +195,8 @@
     })();
   </script>
   <style id="gasForceMobile">
-    html.force-mobile body{padding:172px 18px 190px;font-size:16px}
-    html.force-mobile .stepbar{gap:8px;padding:12px 14px}html.force-mobile .stepbar-logo{height:26px}html.force-mobile .stepbar-steps{gap:8px}html.force-mobile .stepbar-back-label{font-size:9px}html.force-mobile .step{padding:9px 14px;font-size:13px}
+    html.force-mobile body{padding:110px 18px 190px;font-size:16px}
+    html.force-mobile .stepbar{gap:8px;padding:10px 14px}html.force-mobile .stepbar-steps{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}html.force-mobile .step{padding:7px 6px;font-size:11px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}html.force-mobile .step-num::after{content:none}
     html.force-mobile .form-grid,html.force-mobile .package-grid,html.force-mobile .clothing-grid{grid-template-columns:1fr}html.force-mobile .triple-field-row{flex-direction:column;gap:8px}html.force-mobile .triple-field-row>*{width:100%}
     html.force-mobile .player-row{align-items:stretch;flex-direction:column}html.force-mobile .new-player-toggle{width:100%}
     html.force-mobile .selection-inner{align-items:stretch;flex-direction:column;gap:10px}html.force-mobile .selection-actions{width:100%}
@@ -202,7 +204,7 @@
     html.force-mobile .booking-confirmation{left:12px;right:12px;bottom:205px}
     html.force-mobile .credits-inline-row{gap:6px}html.force-mobile .credits-inline-row .credits-sidebar-box{padding:10px 4px}html.force-mobile .credits-inline-row .credits-sidebar-count{font-size:22px}html.force-mobile .credits-inline-row .credits-sidebar-label{font-size:10px;line-height:1.2}
     html.force-mobile .confirmed-actions{flex-direction:column}html.force-mobile .confirmed-actions>button{flex-basis:auto}
-    html.force-mobile .checkout-widget{position:fixed;top:106px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:170px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    html.force-mobile .checkout-widget{position:fixed;top:92px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:170px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
     html.force-mobile .panel{padding:16px}
     html.force-mobile h2{font-size:19px}
     html.force-mobile .intro{font-size:15px;line-height:1.5}
@@ -327,7 +329,7 @@
 }
 
 /* Checkout overview: one card per section (Formules/Shop/Mijn Planning),
-   styled like the Overzicht boxes elsewhere — confirming a section (once
+   styled like the Overzicht boxes elsewhere ‚Äî confirming a section (once
    its contents are reviewed) turns it green, matching .payment-preview-card
    .confirmed's existing look rather than inventing a second "done" style. */
 .checkout-overview-section{
@@ -388,7 +390,7 @@
 </style>
 </head>
 <body>
-  <h1>Rise Academy</h1>
+  <h1>My Rise</h1>
   <div class="intro">Registreer je speler, kies je pakket en selecteer daarna de trainingen die in je agenda passen.</div>
   <div class="site-divider"></div>
 
@@ -398,11 +400,12 @@
       <span class="stepbar-back-label">Ga terug naar www.riseacademy.be</span>
     </a>
     <div class="stepbar-steps">
-      <div class="step active" id="step1">1 · Mijn Speler</div>
-      <div class="step" id="step2">2 · Formules</div>
-      <div class="step" id="step3">3 · Mijn Planning</div>
-      <div class="step" id="step4">4 · Shop</div>
+      <div class="step active" id="step1"><span class="step-num">1</span><span class="step-label">Mijn Speler</span></div>
+      <div class="step" id="step2"><span class="step-num">2</span><span class="step-label">Formules</span></div>
+      <div class="step" id="step3"><span class="step-num">3</span><span class="step-label">Mijn Planning</span></div>
+      <div class="step" id="step4"><span class="step-num">4</span><span class="step-label">Shop</span></div>
     </div>
+    <div id="loadingIndicator" class="loading-indicator hidden-force"><span class="loading-spinner"></span>Bezig...</div>
   </div>
 
   <div class="checkout-widget hidden" id="checkoutWidget">
@@ -427,7 +430,7 @@
         <input id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 cijfers">
       </div>
       <div class="auth-actions">
-        <button class="primary" id="verifyCodeButton">E-mailadres verifiëren</button>
+        <button class="primary" id="verifyCodeButton">E-mailadres verifi√´ren</button>
         <button class="secondary" id="newCodeButton">Nieuwe code</button>
       </div>
     </div>
@@ -548,7 +551,7 @@
             </div>
           </div>
         </div>
-        <div class="field full"><label>Medische info (allergieën, astma, blessures, medicatie) – indien van toepassing</label><input id="medicalInfo"></div>
+        <div class="field full"><label>Medische info (allergie√´n, astma, blessures, medicatie) ‚Äì indien van toepassing</label><input id="medicalInfo"></div>
         <div class="field"><label>Foto/Video Toestemming</label>
           <select id="photoConsent"><option value="Ja">Ja</option><option value="Nee">Nee</option></select>
         </div>
@@ -566,13 +569,13 @@
 
   <section class="panel hidden" id="packagePanel">
     <h2>Formules</h2>
-    <div id="packageIntro" class="message info">Kies één of meerdere pakketten. Je kunt later bijkomende sessies kopen.</div>
+    <div id="packageIntro" class="message info">Kies √©√©n of meerdere pakketten. Je kunt later bijkomende sessies kopen.</div>
     <div class="package-grid" id="packageGrid"></div>
     <div id="clothingNote"></div>
     <div id="packagePaymentPreview" class="payment-preview"></div>
     <div class="step-nav" id="packageStepNav">
-      <button class="secondary" id="packageBackButton">← Ga terug</button>
-      <button class="primary" id="packageForwardButton">Ga verder →</button>
+      <button class="secondary" id="packageBackButton">‚Üê Ga terug</button>
+      <button class="primary" id="packageForwardButton">Ga verder ‚Üí</button>
     </div>
   </section>
 
@@ -583,8 +586,8 @@
     <div id="clothingOverviewWrap">
       <div id="clothingPaymentPreview" class="payment-preview"></div>
       <div class="step-nav" id="clothingStepNav">
-        <button class="secondary" id="clothingBackButton">← Ga terug</button>
-        <button class="primary" id="clothingForwardButton">Naar checkout →</button>
+        <button class="secondary" id="clothingBackButton">‚Üê Ga terug</button>
+        <button class="primary" id="clothingForwardButton">Naar checkout ‚Üí</button>
       </div>
     </div>
   </section>
@@ -610,8 +613,8 @@
         <div id="selectionMessage"></div>
       </div>
       <div class="selection-actions step-nav">
-        <button class="secondary" id="planningBackButton">← Ga terug</button>
-        <button class="primary" id="planningForwardButton">Ga verder →</button>
+        <button class="secondary" id="planningBackButton">‚Üê Ga terug</button>
+        <button class="primary" id="planningForwardButton">Ga verder ‚Üí</button>
       </div>
     </div>
   </div>
@@ -655,19 +658,19 @@ let currentStatus=null;
 let pendingBooking=null;
 // Set (by submitPendingBookingIfNeeded_) whenever a Ga verder/Ga terug/tab
 // navigation away from Mijn Planning has to pause for the "extra sessions
-// needed" purchase modal — called once the modal is resolved (confirmed or
+// needed" purchase modal ‚Äî called once the modal is resolved (confirmed or
 // cancelled) so the navigation that triggered it actually completes.
 let pendingBookingNavCallback_=null;
 let authorisedPlayers=[];
 let currentPaymentSummary=null;
 // Which of the three sections currently have their checkout-overview card
-// marked reviewed/green — purely a review-acknowledgement flag scoped to
+// marked reviewed/green ‚Äî purely a review-acknowledgement flag scoped to
 // the currently open checkout overview, not a record of what's been saved
 // server-side (that already happened when the customer navigated through
 // each section). Reset every time the overview is (re)opened or a section's
 // underlying content changes (an amend un-confirms that section again).
 let checkoutSectionConfirmed={formules:false,planning:false,shop:false};
-// Which pack-tier chips are currently toggled on, per session type — a Set
+// Which pack-tier chips are currently toggled on, per session type ‚Äî a Set
 // instead of a single value, since more than one tier can now be selected
 // at once (e.g. a 5-pack AND a 10-pack together = 15 sessions). Kept here
 // (rather than reconstructed from the hidden total input on every
@@ -686,7 +689,7 @@ let clothingCart={};
 // in one consolidated email instead of two separate ones. Cleared once
 // that email is actually sent (see finishBooking()).
 let pendingPackageOrderIdsForEmail=[];
-// Same idea, but for Shop (Extra Kledij) orders — kept separate because the
+// Same idea, but for Shop (Extra Kledij) orders ‚Äî kept separate because the
 // checkout email shows Formules and Shop as two distinct payment blocks
 // with their own Mededeling, even though one "check out" click sends both
 // (plus Mijn Planning) together.
@@ -705,7 +708,7 @@ const TEKST={
 };
 
 // This page can now be hosted outside script.google.com (e.g. on
-// riseacademy.be) — google.script.run only works when Google itself
+// riseacademy.be) ‚Äî google.script.run only works when Google itself
 // serves the page, and a plain fetch()/XHR to the Apps Script /exec URL
 // fails silently cross-origin because Apps Script never sends CORS
 // headers. JSONP (loading the URL as a <script src>, not fetching it)
@@ -716,17 +719,42 @@ const TEKST={
 // across "new version" redeploys, so this can be hardcoded.
 const BOOKING_API_BASE_URL='https://script.google.com/macros/s/AKfycbz8Y1VdCt569CWVzP5NwlcNxLJZQEgrZxyQWTFUqvtUVzmHPx5PHeYf-ZORlVTBTeHikQ/exec';
 let jsonpCallbackCounter_=0;
+// Tracks in-flight JSONP calls so the loading indicator only shows for
+// requests that are actually taking a moment (a short delay avoids
+// flicker on fast ones) and only hides once every concurrent call has
+// finished, not just the first to return.
+let pendingRequestCount_=0;
+let loadingIndicatorTimer_=null;
+function requestStarted_(){
+  pendingRequestCount_++;
+  if(loadingIndicatorTimer_) return;
+  loadingIndicatorTimer_=setTimeout(()=>{
+    const el=document.getElementById('loadingIndicator');
+    if(el && pendingRequestCount_>0) el.classList.remove('hidden-force');
+  },350);
+}
+function requestFinished_(){
+  pendingRequestCount_=Math.max(0,pendingRequestCount_-1);
+  if(pendingRequestCount_===0){
+    clearTimeout(loadingIndicatorTimer_);
+    loadingIndicatorTimer_=null;
+    const el=document.getElementById('loadingIndicator');
+    if(el) el.classList.add('hidden-force');
+  }
+}
 
 function runServerJSONP_(method,args,onSuccess,onError,timeoutMs){
   const callbackName='riseCb_'+(jsonpCallbackCounter_++)+'_'+Date.now();
   let finished=false;
   let timer;
+  requestStarted_();
 
   const cleanup=()=>{
     delete window[callbackName];
     const tag=document.getElementById(callbackName);
     if(tag) tag.remove();
     clearTimeout(timer);
+    requestFinished_();
   };
 
   timer=setTimeout(()=>{
@@ -800,12 +828,12 @@ function loadPage(){
 }
 
 /*
- * "Stay logged in on this device" — a token saved here (see
+ * "Stay logged in on this device" ‚Äî a token saved here (see
  * rememberAuthToken_) is checked on every fresh page load, so a returning
  * visit on the same browser skips straight past the email + verification
  * code screen instead of asking for a new one every time. Falls back to
  * the normal auth flow silently if there's no token, it's expired, or
- * localStorage isn't available at all (private browsing etc.) — this is
+ * localStorage isn't available at all (private browsing etc.) ‚Äî this is
  * strictly an optional convenience layer on top of the same auth checks
  * every server call already makes.
  */
@@ -823,7 +851,7 @@ function attemptResumeSession_(){
     markAuthVerifiedUI_();
     showAuthorizedPlayers(result.players||[]);
   },()=>{
-    // Expired/revoked — silently fall back to the normal email+code screen
+    // Expired/revoked ‚Äî silently fall back to the normal email+code screen
     // rather than showing an error for something the customer never
     // actively triggered.
     forgetAuthToken_();
@@ -834,7 +862,7 @@ function rememberAuthToken_(token,email){
   try{
     localStorage.setItem('riseAuthToken',token);
     localStorage.setItem('riseAuthEmail',email);
-  }catch(e){ /* storage blocked (private browsing, etc.) — just won't persist */ }
+  }catch(e){ /* storage blocked (private browsing, etc.) ‚Äî just won't persist */ }
 }
 function forgetAuthToken_(){
   try{
@@ -844,7 +872,7 @@ function forgetAuthToken_(){
 }
 /*
  * Explicit sign-out, reachable any time while browsing (not only from the
- * post-checkout screen) — important now that a session can otherwise stay
+ * post-checkout screen) ‚Äî important now that a session can otherwise stay
  * remembered on this device for weeks, e.g. on a shared family computer.
  */
 function logoutAndReset_(){
@@ -884,12 +912,12 @@ function verifyCode(){
   const code=document.getElementById('authCode').value.trim();
   if(!authChallengeId){showAuthMessage('Vraag eerst een verificatiecode aan.','error');return;}
   const b=document.getElementById('verifyCodeButton');
-  b.disabled=true;b.textContent='Bezig met verifiëren...';
+  b.disabled=true;b.textContent='Bezig met verifi√´ren...';
   let verificationReturned=false;
   const verificationTimeout=setTimeout(()=>{
     if(!verificationReturned){
       b.disabled=false;
-      b.textContent='E-mailadres verifiëren';
+      b.textContent='E-mailadres verifi√´ren';
       showAuthMessage('De verificatie duurt te lang. Controleer of de nieuwe versie van de webapp is gepubliceerd en probeer opnieuw.','error');
     }
   },20000);
@@ -899,7 +927,7 @@ function verifyCode(){
     clearTimeout(verificationTimeout);
     authToken=result.token;
     authEmail=result.email;
-    b.disabled=false;b.textContent='E-mailadres verifiëren';
+    b.disabled=false;b.textContent='E-mailadres verifi√´ren';
     rememberAuthToken_(authToken,authEmail);
     markAuthVerifiedUI_();
     showAuthorizedPlayers(result.players||[]);
@@ -907,7 +935,7 @@ function verifyCode(){
     verificationReturned=true;
     clearTimeout(verificationTimeout);
     b.disabled=false;
-    b.textContent='E-mailadres verifiëren';
+    b.textContent='E-mailadres verifi√´ren';
     showAuthMessage(err&&err.message?err.message:'Verificatie mislukt.','error');
   });
 }
@@ -989,7 +1017,7 @@ function selectExistingPlayer(){
 
   // Package eligibility (hasTalent/hasIDP/hasClothing) is only known once
   // the real getPlayerStatus() response arrives. Rendering package cards
-  // from the guessed placeholder above could briefly show the €45 clothing
+  // from the guessed placeholder above could briefly show the ‚Ç¨45 clothing
   // line for a returning player who is no longer eligible for it. Show a
   // loading state instead and let showPackageStep()'s fetch render the
   // real cards once the true status is known.
@@ -1012,12 +1040,12 @@ function renderPlayerStatus(status){
     <div class="credit"><strong>${status.credits['7AM Club']}</strong><span>7AM Club sessies</span></div>
     <div class="credit"><strong>${status.credits['Talent']}</strong><span>Talent sessies</span></div>
     <div class="credit"><strong>${status.credits['IDP']}</strong><span>IDP sessies</span></div>
-  </div>${riseTegoed>0?'<div style="margin-top:9px;padding:8px 10px;background:#fff3f6;border:1px solid var(--pink);border-radius:8px;font-size:13px;"><strong>Rise Credit: €'+riseTegoed.toFixed(2).replace('.',',')+'</strong> — wordt automatisch verrekend bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027.</div>':''}</div>`;
+  </div>${riseTegoed>0?'<div style="margin-top:9px;padding:8px 10px;background:#fff3f6;border:1px solid var(--pink);border-radius:8px;font-size:13px;"><strong>Rise Credit: ‚Ç¨'+riseTegoed.toFixed(2).replace('.',',')+'</strong> ‚Äî wordt automatisch verrekend bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027.</div>':''}</div>`;
   refreshCheckoutWidget_();
 }
 
 /*
- * The single persistent "Check-out" control (see .checkout-widget CSS) —
+ * The single persistent "Check-out" control (see .checkout-widget CSS) ‚Äî
  * always reachable regardless of which section the customer is on, so
  * confirming a section (Formules/Shop/Mijn Planning) never needs its own
  * checkout button any more; each section just confirms and points here.
@@ -1047,7 +1075,7 @@ function renderCheckoutWidgetSummary_(overview){
   const hasSessions=!!(overview.upcoming&&overview.upcoming.length);
   // A cancellation can be the ONLY thing that happened this visit (and can
   // leave upcoming empty, e.g. cancelling someone's one and only booked
-  // session) — still needs to make the widget "ready", same as any other
+  // session) ‚Äî still needs to make the widget "ready", same as any other
   // pending action.
   const hasCancellations=!!(overview.cancelledSessions&&overview.cancelledSessions.length);
 
@@ -1059,10 +1087,10 @@ function renderCheckoutWidgetSummary_(overview){
 
   let rows='';
   if(hasPackages){
-    rows+='<div class="checkout-widget-row"><span>Formules</span><strong>€'+Number(overview.newTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
+    rows+='<div class="checkout-widget-row"><span>Formules</span><strong>‚Ç¨'+Number(overview.newTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
   }
   if(hasShop){
-    rows+='<div class="checkout-widget-row"><span>Shop</span><strong>€'+Number(overview.clothingTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
+    rows+='<div class="checkout-widget-row"><span>Shop</span><strong>‚Ç¨'+Number(overview.clothingTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
   }
   if(hasSessions){
     const n=overview.upcoming.length;
@@ -1096,7 +1124,7 @@ function renderPaymentSummary(summary){
   }
 
   // Formules and Shop orders always need separate bank transfers (each has
-  // its own required Mededeling) — shown as two distinct blocks rather
+  // its own required Mededeling) ‚Äî shown as two distinct blocks rather
   // than one combined total, so it's never ambiguous which reference goes
   // with which amount.
   const iban=escapeHtml(summary.iban||'BE27 9735 5170 1173');
@@ -1104,7 +1132,7 @@ function renderPaymentSummary(summary){
   if(total>0){
     sections+='<div class="payment-outstanding-section">'+
       '<div class="payment-outstanding-label">Formules</div>'+
-      '<div class="payment-total">€'+total.toFixed(2).replace('.',',')+'</div>'+
+      '<div class="payment-total">‚Ç¨'+total.toFixed(2).replace('.',',')+'</div>'+
       '<div class="payment-details">'+
         '<strong>Betaling via overschrijving</strong><br>'+
         'IBAN: <strong>'+iban+'</strong><br>'+
@@ -1115,7 +1143,7 @@ function renderPaymentSummary(summary){
   if(clothingTotal>0){
     sections+='<div class="payment-outstanding-section">'+
       '<div class="payment-outstanding-label">Shop</div>'+
-      '<div class="payment-total">€'+clothingTotal.toFixed(2).replace('.',',')+'</div>'+
+      '<div class="payment-total">‚Ç¨'+clothingTotal.toFixed(2).replace('.',',')+'</div>'+
       '<div class="payment-details">'+
         '<strong>Betaling via overschrijving</strong><br>'+
         'IBAN: <strong>'+iban+'</strong><br>'+
@@ -1125,7 +1153,7 @@ function renderPaymentSummary(summary){
   }
 
   target.innerHTML=sections+
-    '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou €20 Rise Credit op voor je volgende aankoop.</div>'+
+    '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou ‚Ç¨20 Rise Credit op voor je volgende aankoop.</div>'+
     '<div class="payment-note">'+
       '*Eenmalige sessies kunnen worden bijgeboekt nadat er reeds een pakket van minstens 5 sessies werd geboekt.<br>'+
       '*Je aangekochte sessies zijn geldig doorheen het hele seizoen 2026-2027'+
@@ -1139,7 +1167,7 @@ function loadPaymentSummary(){
 
 // Mirrors calculatePackage_() in Code.gs exactly: finds the cheapest
 // combination of the sizes below for the requested quantity (a coin-change
-// solve, not a flat lookup) — this is what makes "5-pack + 3 loose sessions"
+// solve, not a flat lookup) ‚Äî this is what makes "5-pack + 3 loose sessions"
 // (quantity 8) price correctly instead of only exact tiers or 1-4 loose.
 const PACKAGE_PRICING_={
   '7AM Club':{1:15,5:60},
@@ -1218,7 +1246,7 @@ function renderPackagePaymentPreview(){
   const subtotal=rows.reduce((sum,row)=>sum+row.price,0);
   const clothing=clothingNeeded?45:0;
   // Rise Credit (referral credit) applies only to session packages, never
-  // to clothing — mirrors calculatePurchase_() server-side.
+  // to clothing ‚Äî mirrors calculatePurchase_() server-side.
   const riseTegoedAvailable=Number((currentStatus&&currentStatus.riseTegoedBalance)||0);
   const riseTegoedApplied=Math.min(riseTegoedAvailable,subtotal);
   const total=(subtotal-riseTegoedApplied)+clothing;
@@ -1242,26 +1270,26 @@ function renderPackagePaymentPreview(){
 
   const invoiceRows=rows.map(row=>
     '<div class="invoice-row">'+
-      '<span>'+escapeHtml(row.label)+' — '+row.quantity+' sessie'+(row.quantity===1?'':'s')+'</span>'+
-      '<strong>€'+row.price.toFixed(2).replace('.',',')+'</strong>'+
+      '<span>'+escapeHtml(row.label)+' ‚Äî '+row.quantity+' sessie'+(row.quantity===1?'':'s')+'</span>'+
+      '<strong>‚Ç¨'+row.price.toFixed(2).replace('.',',')+'</strong>'+
     '</div>'
   ).join('');
 
   const clothingRow=clothingNeeded
-    ? '<div class="invoice-row"><span>Kledingpakket (shirt, short en sokken)</span><strong>€45,00</strong></div>'
+    ? '<div class="invoice-row"><span>Kledingpakket (shirt, short en sokken)</span><strong>‚Ç¨45,00</strong></div>'
     : '';
 
   const riseTegoedRow=riseTegoedApplied>0
-    ? '<div class="invoice-row"><span>Rise Credit toegepast</span><strong>-€'+riseTegoedApplied.toFixed(2).replace('.',',')+'</strong></div>'
+    ? '<div class="invoice-row"><span>Rise Credit toegepast</span><strong>-‚Ç¨'+riseTegoedApplied.toFixed(2).replace('.',',')+'</strong></div>'
     : '';
 
-  // A first Talent/IDP purchase must total at least 5 sessions — combined
+  // A first Talent/IDP purchase must total at least 5 sessions ‚Äî combined
   // across Talent+IDP, not per type, so a 5-pack in one covers the minimum
   // for loose sessions added in the other (mirrors the combined check in
   // createPackagePurchases server-side). The stepper already blocks a lone
   // first-time box from starting loose-only, but a pack can still be
   // deselected again after loose sessions were added on top, landing the
-  // combined total under 5 — catch that here as an explicit, actionable
+  // combined total under 5 ‚Äî catch that here as an explicit, actionable
   // warning (and block the confirm button) rather than a server error.
   const firstTimeRows=packageFirstTimeRows_(rows);
   const firstTimeSum=firstTimeRows?firstTimeRows.reduce((sum,r)=>sum+r.quantity,0):0;
@@ -1280,13 +1308,13 @@ function renderPackagePaymentPreview(){
       '<div class="invoice-player">'+escapeHtml(name)+'</div>'+
       '<div class="invoice-items">'+invoiceRows+clothingRow+riseTegoedRow+'</div>'+
       minFiveWarning+
-      '<div class="invoice-total-row"><span>Totaal</span><strong>€'+total.toFixed(2).replace('.',',')+'</strong></div>'+
+      '<div class="invoice-total-row"><span>Totaal</span><strong>‚Ç¨'+total.toFixed(2).replace('.',',')+'</strong></div>'+
       '<div class="payment-details">'+
         '<strong>Betaling via overschrijving</strong><br>'+
         'IBAN: <strong>BE27 9735 5170 1173</strong><br>'+
         'Mededeling: <strong>'+escapeHtml(reference)+'</strong>'+
       '</div>'+
-      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou €20 Rise Credit op voor je volgende aankoop.</div>'+
+      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou ‚Ç¨20 Rise Credit op voor je volgende aankoop.</div>'+
       '<div class="payment-note">'+
         '*Eenmalige sessies kunnen worden bijgeboekt nadat er reeds een pakket van minstens 5 sessies werd geboekt.<br>'+
         '*Je aangekochte sessies zijn geldig doorheen het hele seizoen 2026-2027'+
@@ -1299,7 +1327,7 @@ function resetToPlayerStep(){
   clothingCart={};
   packageSelectedTiers={'7AM Club':new Set(),Talent:new Set(),IDP:new Set()};
   packageLooseCounts={'7AM Club':0,Talent:0,IDP:0};
-  // Pending checkout state belongs to whichever player it was created for —
+  // Pending checkout state belongs to whichever player it was created for ‚Äî
   // switching players must not carry it over (both to avoid emailing the
   // wrong child's order and to keep the check-out widget honest).
   pendingPackageOrderIdsForEmail=[];pendingClothingOrderIdsForEmail=[];pendingCancelledSessionsForEmail=[];
@@ -1439,7 +1467,7 @@ function openEditPlayerForm(){
   document.getElementById('playerFormTitle').textContent='Spelergegevens bewerken';
   document.getElementById('registerPlayerButton').textContent='Wijzigingen opslaan';
   // A referral is a one-time registration detail tied to the reward
-  // logic, not an ongoing profile field — not editable after the fact.
+  // logic, not an ongoing profile field ‚Äî not editable after the fact.
   document.getElementById('referredByField').style.display='none';
 
   document.getElementById('firstName').value=d['First name']||'';
@@ -1514,11 +1542,11 @@ function saveExistingPlayerEdits_(){
   });
 }
 
-// Only the discounted pack tiers — 1-4 loose sessions are now handled by
+// Only the discounted pack tiers ‚Äî 1-4 loose sessions are now handled by
 // the +/- stepper in renderPackages() instead of living in this dropdown.
 function packageOptions(type){
-  if(type==='7AM Club') return [{n:5,l:'5 sessies — €60'}];
-  return [{n:5,l:'5 sessies — '+(type==='Talent'?'€110':'€160')},{n:10,l:'10 sessies — '+(type==='Talent'?'€200':'€300')},{n:20,l:'20 sessies — '+(type==='Talent'?'€360':'€540')}];
+  if(type==='7AM Club') return [{n:5,l:'5 sessies ‚Äî ‚Ç¨60'}];
+  return [{n:5,l:'5 sessies ‚Äî '+(type==='Talent'?'‚Ç¨110':'‚Ç¨160')},{n:10,l:'10 sessies ‚Äî '+(type==='Talent'?'‚Ç¨200':'‚Ç¨300')},{n:20,l:'20 sessies ‚Äî '+(type==='Talent'?'‚Ç¨360':'‚Ç¨540')}];
 }
 function onPackageQtyChanged_(){
   renderPackagePaymentPreview();
@@ -1532,7 +1560,7 @@ function renderPackages(status){
 
   // A first-ever Talent/IDP purchase needs 5 sessions in total, combined
   // across Talent+IDP rather than per type (mirrors the server-side check
-  // in createPackagePurchases) — a 5-pack picked in either card should
+  // in createPackagePurchases) ‚Äî a 5-pack picked in either card should
   // unlock the loose-session stepper in the other. Since every pack tier
   // starts at 5, any pack selected in either first-time card already
   // satisfies the combined minimum on its own.
@@ -1561,7 +1589,7 @@ function renderPackages(status){
       const key=type==='7AM Club'?'7AM Club':type;
       const opts=packageOptions(type);
       // A first Talent/IDP purchase must total at least 5 sessions (existing
-      // business rule, enforced server-side too) — the stepper still shows
+      // business rule, enforced server-side too) ‚Äî the stepper still shows
       // for these cards so a first order can be "5-pack + 2 loose", but the
       // loose stepper stays locked at 0 until a pack is picked, so a first
       // order can never be loose-only and land under 5.
@@ -1586,16 +1614,16 @@ function renderPackages(status){
 
       const stepper=document.createElement('div');
       stepper.className='qty-stepper';
-      stepper.innerHTML='<button type="button" class="qty-btn qty-minus" aria-label="Een minder">−</button><span class="qty-value">0</span><button type="button" class="qty-btn qty-plus" aria-label="Een meer">+</button>';
+      stepper.innerHTML='<button type="button" class="qty-btn qty-minus" aria-label="Een minder">‚àí</button><span class="qty-value">0</span><button type="button" class="qty-btn qty-plus" aria-label="Een meer">+</button>';
       controls.appendChild(stepper);
-      controls.insertAdjacentHTML('beforeend','<div class="qty-caption">Losse sessies — €'+unitPrice+'/sessie</div><div class="qty-or">en/of kies een of meerdere pakketten</div><div class="qty-bonus-note" style="display:none"></div>');
+      controls.insertAdjacentHTML('beforeend','<div class="qty-caption">Losse sessies ‚Äî ‚Ç¨'+unitPrice+'/sessie</div><div class="qty-or">en/of kies een of meerdere pakketten</div><div class="qty-bonus-note" style="display:none"></div>');
       const qtyValueEl=stepper.querySelector('.qty-value');
       const qtyMinusBtn=stepper.querySelector('.qty-minus');
       const qtyPlusBtn=stepper.querySelector('.qty-plus');
       const bonusNote=controls.querySelector('.qty-bonus-note');
 
       // Pack tiers are chosen by clicking any number of always-visible chip
-      // buttons — more than one can be active at once (e.g. a 5-pack AND a
+      // buttons ‚Äî more than one can be active at once (e.g. a 5-pack AND a
       // 10-pack together = 15 sessions), toggled back off the same way.
       // packageSelectedTiers/packageLooseCounts (declared near the other
       // global state) persist the actual selection across re-renders, since
@@ -1608,7 +1636,7 @@ function renderPackages(status){
       const selectedTiers=packageSelectedTiers[key];
       qtyValueEl.textContent=String(packageLooseCounts[key]||0);
 
-      // Pack and loose sessions are additive, not either/or — a 5-pack plus
+      // Pack and loose sessions are additive, not either/or ‚Äî a 5-pack plus
       // 3 loose sessions is a valid total of 8, priced by packagePrice_()
       // (the same coin-change solver Code.gs uses server-side), not just
       // "pack price + 3x unit price" tacked on separately.
@@ -1659,15 +1687,15 @@ function renderPackages(status){
         if(val>=4 || (first && combinedFirstTimeTotal_()===0)) return;
         val+=1;
         // If 4 loose sessions (with no pack picked) would cost exactly the
-        // same as the 5-pack (true for 7AM Club today: 4x€15 = €60 = the
+        // same as the 5-pack (true for 7AM Club today: 4x‚Ç¨15 = ‚Ç¨60 = the
         // 5-pack price), give the customer the free 5th session instead of
-        // quietly charging pack price for one fewer — switch to the 5-pack.
+        // quietly charging pack price for one fewer ‚Äî switch to the 5-pack.
         if(val===4 && packTotal_()===0 && packagePrice_(type,4)===packagePrice_(type,5) && opts.some(o=>o.n===5)){
           selectedTiers.add(5);
           val=0;
           packageLooseCounts[key]=0;
           qtyValueEl.textContent='0';
-          bonusNote.textContent='4 sessies kost hetzelfde als 5 (€'+packagePrice_(type,5)+') — we geven je er automatisch 5!';
+          bonusNote.textContent='4 sessies kost hetzelfde als 5 (‚Ç¨'+packagePrice_(type,5)+') ‚Äî we geven je er automatisch 5!';
           bonusNote.style.display='block';
           refreshChipStates_();
           refreshAllQtyButtons_();
@@ -1692,7 +1720,7 @@ function renderPackages(status){
       });
 
       if(first){
-        card.insertAdjacentHTML('beforeend','<div class="package-note">Eerste inschrijving: minimum 5 sessies in totaal voor Talent Sessions en IDP Sessions samen. Kies hierboven een pakket — in dit vak of in het andere — om ook losse sessies toe te voegen.</div>');
+        card.insertAdjacentHTML('beforeend','<div class="package-note">Eerste inschrijving: minimum 5 sessies in totaal voor Talent Sessions en IDP Sessions samen. Kies hierboven een pakket ‚Äî in dit vak of in het andere ‚Äî om ook losse sessies toe te voegen.</div>');
       }
       fragment.appendChild(card);
     });
@@ -1714,13 +1742,13 @@ function renderPackages(status){
     selectedNow.some(row=>row.type==='Talent'||row.type==='IDP');
 
   document.getElementById('clothingNote').innerHTML=needsClothing
-    ? '<div class="clothing-note"><strong>Kledingpakket:</strong> bij je eerste Talent/IDP-inschrijving wordt automatisch één kledingpakket (shirt, short en sokken) toegevoegd voor €45.</div>'
+    ? '<div class="clothing-note"><strong>Kledingpakket:</strong> bij je eerste Talent/IDP-inschrijving wordt automatisch √©√©n kledingpakket (shirt, short en sokken) toegevoegd voor ‚Ç¨45.</div>'
     : '';
 
   const totalCredits=Number(status.credits['7AM Club']||0)+Number(status.credits.Talent||0)+Number(status.credits.IDP||0);
   document.getElementById('packageIntro').textContent=totalCredits>0
     ? 'Je huidige sessies blijven beschikbaar. Je kunt hier een bijkomend pakket kiezen of meteen verdergaan naar de kalender.'
-    : 'Kies eerst minstens één pakket. Daarna kies je de sessies die in je agenda passen.';
+    : 'Kies eerst minstens √©√©n pakket. Daarna kies je de sessies die in je agenda passen.';
 
   renderPackagePaymentPreview();
 }
@@ -1733,7 +1761,7 @@ function packageSelections(){
  * "Save as you go": called on every way of leaving the Formules step (Ga
  * verder, Ga terug, or a top-tab jump) instead of behind its own blocking
  * confirm button. If nothing is pending it calls onDone() immediately with
- * no server round trip — navigation only pauses for the moment it takes to
+ * no server round trip ‚Äî navigation only pauses for the moment it takes to
  * actually write a real selection.
  */
 function submitPendingPackagesIfNeeded_(onDone,onError){
@@ -1746,7 +1774,7 @@ function submitPendingPackagesIfNeeded_(onDone,onError){
       renderPaymentSummary(result.paymentSummary);
     }
 
-    // Written successfully — start the next visit to this step from a
+    // Written successfully ‚Äî start the next visit to this step from a
     // clean slate instead of showing the same chips as if still pending
     // (which would otherwise resubmit the same order again).
     packageSelectedTiers={'7AM Club':new Set(),Talent:new Set(),IDP:new Set()};
@@ -1788,7 +1816,7 @@ function setPackageNavDisabled_(disabled){
 }
 function goPackagesBack(){
   // A pack under the 5-session minimum was never a valid order to begin
-  // with — going back is the customer stepping away from it, not
+  // with ‚Äî going back is the customer stepping away from it, not
   // confirming it, so drop it here instead of submitting and hitting the
   // same server error the (disabled) forward button already guards against.
   const rows=getSelectedPackageRows();
@@ -1826,16 +1854,16 @@ function renderFilters(){
     b.onclick=()=>handleFilter(value);
     c.appendChild(b);
   });
-  // Remaining-credit counts used to sit under the filter buttons — moved to
+  // Remaining-credit counts used to sit under the filter buttons ‚Äî moved to
   // a fixed sidebar on wide screens (see .credits-sidebar) so they stay
   // visible while scrolling the calendar. On medium/narrow screens, where
   // there's no room for a fixed sidebar, the same three boxes render inline
-  // instead (see .credits-inline) — CSS media queries pick exactly one of
+  // instead (see .credits-inline) ‚Äî CSS media queries pick exactly one of
   // the two per screen size, this just keeps both filled in.
   renderCreditsSidebar();
 }
 // How many not-yet-booked sessions of each type are currently checked in
-// the calendar — used to count remaining credits down live as the customer
+// the calendar ‚Äî used to count remaining credits down live as the customer
 // selects, before they ever click "Mijn planning bevestigen".
 function pendingSelectionCountByType_(){
   const counts={'7AM Club':0,Talent:0,IDP:0};
@@ -1902,7 +1930,7 @@ function renderCalendar(){
   }
   const bookingsMap=getBookingsByActivityId_();
   // Value is the WAITLIST row's own status ('Waiting' or 'Offered') so the
-  // UI can tell "in line" apart from "it's your turn, check your email" —
+  // UI can tell "in line" apart from "it's your turn, check your email" ‚Äî
   // the actual accept/decline happens via the emailed link, not here.
   const waitlistStatusByActivity_={};
   (currentStatus&&currentStatus.waitlist||[]).forEach(w=>{ waitlistStatusByActivity_[w.activityId]=w.status; });
@@ -1930,13 +1958,13 @@ function renderCalendar(){
       const alreadyBooked=!!booking;
       const full=Number(activity.available)<=0;const waitlistStatus=waitlistStatusByActivity_[activity.id]||'';const waitlisted=!!waitlistStatus;const hasFirstRefusal=waitlistStatus==='Offered';const session=document.createElement('div');session.className='session '+getSessionClass(activity.type)+(selectedActivities.has(activity.id)?' selected':'')+(full?' full-session':'')+(alreadyBooked?' booked-session':'');
       const main=document.createElement('div');main.className='session-main';const type=document.createElement('div');type.className='session-type';type.textContent=getSessionLabel(activity.type);main.appendChild(type);
-      const info=document.createElement('div');info.className='session-info';info.textContent=activity.start+' – '+activity.end+' · '+activity.location;main.appendChild(info);
+      const info=document.createElement('div');info.className='session-info';info.textContent=activity.start+' ‚Äì '+activity.end+' ¬∑ '+activity.location;main.appendChild(info);
       if(alreadyBooked){
         const badge=document.createElement('div');badge.className='booked-badge';badge.textContent='Geboekt';main.appendChild(badge);
       }else if(full){
         const badge=document.createElement('div');badge.className='full-badge'+(waitlisted?' waitlisted-badge':'');badge.textContent=hasFirstRefusal?'Check je e-mail!':(waitlisted?'Op wachtlijst':'Volzet');main.appendChild(badge);
         if(hasFirstRefusal){
-          const hint=document.createElement('div');hint.className='session-info';hint.style.opacity='.9';hint.textContent='Je hebt eerste keuze voor deze plaats — bevestig via de link in je e-mail.';main.appendChild(hint);
+          const hint=document.createElement('div');hint.className='session-info';hint.style.opacity='.9';hint.textContent='Je hebt eerste keuze voor deze plaats ‚Äî bevestig via de link in je e-mail.';main.appendChild(hint);
         }
       }else{
         const av=document.createElement('div');av.className='availability';av.textContent=activity.available+' '+TEKST.places;main.appendChild(av);
@@ -1945,7 +1973,7 @@ function renderCalendar(){
 
       if(alreadyBooked){
         // Cancelling used to live only in a separate "Mijn geplande
-        // sessies" list — it's now available directly on the session
+        // sessies" list ‚Äî it's now available directly on the session
         // card wherever it appears (via "Alle sessies" or the new
         // "Mijn sessies" filter), so there's one place to manage bookings.
         if(canStillCancel_(booking,activity)){
@@ -1962,7 +1990,7 @@ function renderCalendar(){
           session.appendChild(note);
         }
       }else if(full){
-        // A full session no longer just blocks selection — join (or leave)
+        // A full session no longer just blocks selection ‚Äî join (or leave)
         // a waitlist for it instead. See joinWaitlistFor_/leaveWaitlistFor_.
         const wlBtn=document.createElement('button');
         wlBtn.type='button';
@@ -1987,11 +2015,11 @@ function renderCalendar(){
 function toggleActivity(id,selected){if(selected)selectedActivities.add(id);else selectedActivities.delete(id);renderCalendar();}
 function updateSelection(){
   const count=selectedActivities.size;document.getElementById('selectionCount').textContent=count+' '+(count===1?TEKST.selectedOne:TEKST.selectedMany);
-  const selected=activities.filter(a=>selectedActivities.has(a.id));document.getElementById('selectionList').innerHTML=selected.map(a=>formatDate(a.date)+' · '+getSessionLabel(a.type)).join('<br>');
+  const selected=activities.filter(a=>selectedActivities.has(a.id));document.getElementById('selectionList').innerHTML=selected.map(a=>formatDate(a.date)+' ¬∑ '+getSessionLabel(a.type)).join('<br>');
   renderCreditsSidebar();
 }
 
-// Mirrors CANCEL_CUTOFF_HOURS in Code.gs — for display only. The server
+// Mirrors CANCEL_CUTOFF_HOURS in Code.gs ‚Äî for display only. The server
 // is still the source of truth and re-checks this on every cancel request.
 const CANCEL_CUTOFF_HOURS={'7AM Club':12,'Talent':12,'IDP':48};
 function canStillCancel_(booking,activity){
@@ -2003,7 +2031,7 @@ function canStillCancel_(booking,activity){
   return new Date()<cutoffTime;
 }
 /*
- * Waitlist for a full session — no confirmation modal needed (unlike
+ * Waitlist for a full session ‚Äî no confirmation modal needed (unlike
  * cancelling a real booking, joining/leaving a waitlist spends nothing and
  * reserves nothing, so there's no consequence worth pausing to confirm).
  * refreshStatusAndCalendarSafe_() re-pulls currentStatus.waitlist and
@@ -2034,7 +2062,7 @@ function leaveWaitlistFor_(activityId,btn){
 }
 
 // Native confirm() dialogs can't be styled and (inside an Apps Script
-// iframe) show the raw embedding URL, which looks broken to customers — a
+// iframe) show the raw embedding URL, which looks broken to customers ‚Äî a
 // modal matching the rest of the app's UI instead.
 let pendingCancelRegistration=null;
 
@@ -2063,7 +2091,7 @@ function confirmCancelBooking_(){
   document.getElementById('cancelConfirmModal').classList.add('hidden');
 
   // Optimistic update: reflect the cancellation on screen immediately
-  // instead of waiting on the server round-trip — cancelRegistration still
+  // instead of waiting on the server round-trip ‚Äî cancelRegistration still
   // runs right after in the background and is the real source of truth.
   // refreshStatusAndCalendarSafe_() (called either way, below) reconciles
   // silently if the server ends up disagreeing, so a failed cancel still
@@ -2081,7 +2109,7 @@ function confirmCancelBooking_(){
   showBookingMessage('Inschrijving geannuleerd.','success');
 
   // A cancellation is exactly the kind of thing the Check-out flow already
-  // exists for — it makes the check-out widget "ready" the same way buying
+  // exists for ‚Äî it makes the check-out widget "ready" the same way buying
   // a package or booking a session does, so the customer can confirm it
   // (and get an email with the cancellation + their updated planning) even
   // if all they did this visit was cancel.
@@ -2091,10 +2119,10 @@ function confirmCancelBooking_(){
   runServer('cancelRegistration',[authToken,currentPlayerId,regId],result=>{
     refreshStatusAndCalendarSafe_();
     // Admin overview rebuild is slow and not needed for the customer-facing
-    // response — run it in the background, same pattern used elsewhere.
+    // response ‚Äî run it in the background, same pattern used elsewhere.
     runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
   },err=>{
-    // The cancellation did not actually happen — resync with the server's
+    // The cancellation did not actually happen ‚Äî resync with the server's
     // real state, which undoes the optimistic guess above.
     refreshStatusAndCalendarSafe_();
     showError(err);
@@ -2104,7 +2132,7 @@ function showBookingMessage(text,type){document.getElementById('bookingMessage')
 function showSelectionMessage(text,type){document.getElementById('selectionMessage').innerHTML=text?('<div class="selection-message '+type+'">'+escapeHtml(text)+'</div>'):'';}
 
 /*
- * "Save as you go" for Mijn Planning — called on every way of leaving the
+ * "Save as you go" for Mijn Planning ‚Äî called on every way of leaving the
  * step (Ga verder, Ga terug, a top-tab jump, or the persistent Check-out
  * button) instead of behind its own blocking confirm button. If the
  * player's existing credits don't cover the selection, this pauses for the
@@ -2176,28 +2204,28 @@ function goPlanningForward(){
 
 function showPurchaseModal(preview){
   let html='<p>Je huidige sessies dekken een deel van je selectie. Voor de resterende sessies is een bijkomende aankoop nodig.</p><ul>';
-  Object.keys(preview.additional).forEach(type=>{const n=preview.additional[type];if(n>0){const p=preview.packages[type];html+='<li><strong>'+escapeHtml(getSessionLabel(type))+'</strong>: '+n+' extra sessie'+(n===1?'':'s')+' — '+p.items.map(i=>i.sessions+' sessie'+(i.sessions===1?'':'s')+' (€'+i.price+')').join(' + ')+' = <span class="price">€'+p.price+'</span></li>';}});
+  Object.keys(preview.additional).forEach(type=>{const n=preview.additional[type];if(n>0){const p=preview.packages[type];html+='<li><strong>'+escapeHtml(getSessionLabel(type))+'</strong>: '+n+' extra sessie'+(n===1?'':'s')+' ‚Äî '+p.items.map(i=>i.sessions+' sessie'+(i.sessions===1?'':'s')+' (‚Ç¨'+i.price+')').join(' + ')+' = <span class="price">‚Ç¨'+p.price+'</span></li>';}});
   html+='</ul><p style="font-size:13px;color:#666">De aankoop wordt geregistreerd. Betaling wordt manueel opgevolgd.</p>';document.getElementById('purchaseModalText').innerHTML=html;document.getElementById('purchaseModal').classList.remove('hidden');
 }
 function closePurchaseModal(){
   document.getElementById('purchaseModal').classList.add('hidden');
   pendingBooking=null;
   // Declining the extra purchase means the navigation that triggered this
-  // modal doesn't happen — the customer stays on Mijn Planning to adjust
+  // modal doesn't happen ‚Äî the customer stays on Mijn Planning to adjust
   // their selection instead.
   pendingBookingNavCallback_=null;
   setPlanningNavDisabled_(false);
 }
 
 /*
- * "Checkout" is the customer's own explicit final step — the one moment
+ * "Checkout" is the customer's own explicit final step ‚Äî the one moment
  * that actually sends the confirmation email, regardless of whether this
  * visit involved buying a package, booking sessions, both, or (after
  * coming back later) neither yet. Package purchases and session bookings
  * are already saved the moment they happen; this only reviews and emails.
  */
 // The overview last fetched from the server for the currently open
-// checkout modal — cached so a per-section "Bevestigen"/"wijzigen" click
+// checkout modal ‚Äî cached so a per-section "Bevestigen"/"wijzigen" click
 // can re-render without a round trip (only actual removals refetch).
 let currentCheckoutOverview_=null;
 
@@ -2209,7 +2237,7 @@ function openCheckoutOverview(btn){
   btn=btn||document.getElementById('checkoutWidgetButton');
   const originalText=btn?btn.textContent:'';
   if(btn){btn.disabled=true;btn.textContent='Overzicht wordt geladen...';}
-  // Every fresh open starts every present section unconfirmed again — a
+  // Every fresh open starts every present section unconfirmed again ‚Äî a
   // deliberate re-review each time, rather than remembering "green" across
   // a close/reopen or an earlier visit.
   checkoutSectionConfirmed={formules:false,planning:false,shop:false};
@@ -2252,7 +2280,7 @@ const CHECKOUT_SECTION_LABEL_={formules:'Formules',shop:'Shop',planning:'Mijn Pl
 function checkoutSectionFooter_(key){
   const addMoreLink='<button type="button" class="link-button" data-goto-section="'+key+'">+ meer toevoegen in '+CHECKOUT_SECTION_LABEL_[key]+'</button>';
   if(checkoutSectionConfirmed[key]){
-    return '<div class="checkout-overview-confirmed-tag">✓ Bevestigd — <button type="button" class="link-button" data-amend-section="'+key+'" style="color:#176b39;text-decoration:underline">wijzigen</button></div>';
+    return '<div class="checkout-overview-confirmed-tag">‚úì Bevestigd ‚Äî <button type="button" class="link-button" data-amend-section="'+key+'" style="color:#176b39;text-decoration:underline">wijzigen</button></div>';
   }
   return '<div class="checkout-overview-actions"><button type="button" class="primary" data-confirm-section="'+key+'">Bevestigen</button></div>'+
     '<div style="margin-top:8px">'+addMoreLink+'</div>';
@@ -2273,7 +2301,7 @@ function amendCheckoutSection_(key){
 }
 
 /*
- * Amend (eliminate an item) — each of these actually cancels the
+ * Amend (eliminate an item) ‚Äî each of these actually cancels the
  * already-saved order/session server-side (see cancelPackageOrder_/
  * cancelClothingOrder/cancelRegistration in Code.gs; nothing here is just
  * local cart state, since "save as you go" already wrote it for real), then
@@ -2307,8 +2335,8 @@ function removeCheckoutSession_(registrationId){
 
 /*
  * One card per section (Formules/Shop/Mijn Planning), styled like the
- * Overzicht boxes elsewhere in the app — each can be reviewed and
- * "Bevestigd" (turning it green) or amended (remove an item with ×, or add
+ * Overzicht boxes elsewhere in the app ‚Äî each can be reviewed and
+ * "Bevestigd" (turning it green) or amended (remove an item with √ó, or add
  * more by going back into that section). The final afronden button below
  * stays disabled until every section that actually has content is green.
  */
@@ -2320,20 +2348,20 @@ function renderCheckoutOverview_(overview){
     const confirmed=checkoutSectionConfirmed.formules;
     html+='<div class="checkout-overview-section'+(confirmed?' confirmed':'')+'"><h4>Formules</h4>';
     overview.orders.forEach(o=>{
-      html+='<div class="checkout-overview-row"><span class="cor-label">'+escapeHtml(getSessionLabel(o.sessionType))+' — '+o.quantity+' '+(o.quantity===1?'sessie':'sessies')+' — €'+Number(o.sessionPrice||0).toFixed(2).replace('.',',')+'</span>'+
+      html+='<div class="checkout-overview-row"><span class="cor-label">'+escapeHtml(getSessionLabel(o.sessionType))+' ‚Äî '+o.quantity+' '+(o.quantity===1?'sessie':'sessies')+' ‚Äî ‚Ç¨'+Number(o.sessionPrice||0).toFixed(2).replace('.',',')+'</span>'+
         (confirmed?'':'<button type="button" class="checkout-overview-remove" data-remove-package-order="'+escapeHtml(o.orderId)+'" aria-label="Verwijderen">&times;</button>')+
       '</div>';
       if(o.clothingPrice>0){
-        html+='<div class="checkout-overview-row"><span class="cor-label">Kledingpakket (shirt, short en sokken) — €'+Number(o.clothingPrice).toFixed(2).replace('.',',')+'</span></div>';
+        html+='<div class="checkout-overview-row"><span class="cor-label">Kledingpakket (shirt, short en sokken) ‚Äî ‚Ç¨'+Number(o.clothingPrice).toFixed(2).replace('.',',')+'</span></div>';
       }
     });
     if(Number(overview.riseTegoedAppliedTotal||0)>0){
-      html+='<div class="checkout-overview-row"><span class="cor-label">Rise Credit toegepast</span><span>-€'+Number(overview.riseTegoedAppliedTotal).toFixed(2).replace('.',',')+'</span></div>';
+      html+='<div class="checkout-overview-row"><span class="cor-label">Rise Credit toegepast</span><span>-‚Ç¨'+Number(overview.riseTegoedAppliedTotal).toFixed(2).replace('.',',')+'</span></div>';
     }
-    html+='<div class="invoice-total-row" style="font-size:17px;padding:10px 0"><span>Totaal Formules</span><strong>€'+Number(overview.newTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
+    html+='<div class="invoice-total-row" style="font-size:17px;padding:10px 0"><span>Totaal Formules</span><strong>‚Ç¨'+Number(overview.newTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
     html+=overview.paymentExempt
       ? '<div style="font-size:13px;color:#666;">Voor deze speler is geen betaling vereist.</div>'
-      : '<div style="font-size:13px;color:#666;">Betaling via overschrijving — IBAN: <strong>'+escapeHtml(overview.iban||'')+'</strong> — Mededeling: <strong>'+escapeHtml(overview.reference||'')+'</strong></div>';
+      : '<div style="font-size:13px;color:#666;">Betaling via overschrijving ‚Äî IBAN: <strong>'+escapeHtml(overview.iban||'')+'</strong> ‚Äî Mededeling: <strong>'+escapeHtml(overview.reference||'')+'</strong></div>';
     html+=checkoutSectionFooter_('formules');
     html+='</div>';
   }
@@ -2345,15 +2373,15 @@ function renderCheckoutOverview_(overview){
     html+='<div class="checkout-overview-section'+(confirmed?' confirmed':'')+'"><h4>Shop</h4>';
     clothingOrders.forEach(o=>{
       const lineText=(o.lines||[]).map(l=>escapeHtml(l.name)+(l.size?' (maat '+escapeHtml(l.size)+')':'')+' x'+l.quantity).join(', ');
-      html+='<div class="checkout-overview-row"><span class="cor-label">'+lineText+' — €'+Number(o.total||0).toFixed(2).replace('.',',')+'</span>'+
+      html+='<div class="checkout-overview-row"><span class="cor-label">'+lineText+' ‚Äî ‚Ç¨'+Number(o.total||0).toFixed(2).replace('.',',')+'</span>'+
         (confirmed?'':'<button type="button" class="checkout-overview-remove" data-remove-clothing-order="'+escapeHtml(o.orderId)+'" aria-label="Verwijderen">&times;</button>')+
       '</div>';
     });
     if(Number(overview.clothingRiseTegoedAppliedTotal||0)>0){
-      html+='<div class="checkout-overview-row"><span class="cor-label">Rise Credit toegepast</span><span>-€'+Number(overview.clothingRiseTegoedAppliedTotal).toFixed(2).replace('.',',')+'</span></div>';
+      html+='<div class="checkout-overview-row"><span class="cor-label">Rise Credit toegepast</span><span>-‚Ç¨'+Number(overview.clothingRiseTegoedAppliedTotal).toFixed(2).replace('.',',')+'</span></div>';
     }
-    html+='<div class="invoice-total-row" style="font-size:17px;padding:10px 0"><span>Totaal Shop</span><strong>€'+Number(overview.clothingTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
-    html+='<div style="font-size:13px;color:#666;">Betaling via overschrijving — IBAN: <strong>'+escapeHtml(overview.iban||'')+'</strong> — Mededeling: <strong>'+escapeHtml(overview.clothingReference||'')+'</strong></div>';
+    html+='<div class="invoice-total-row" style="font-size:17px;padding:10px 0"><span>Totaal Shop</span><strong>‚Ç¨'+Number(overview.clothingTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
+    html+='<div style="font-size:13px;color:#666;">Betaling via overschrijving ‚Äî IBAN: <strong>'+escapeHtml(overview.iban||'')+'</strong> ‚Äî Mededeling: <strong>'+escapeHtml(overview.clothingReference||'')+'</strong></div>';
     html+='<div style="font-size:12px;color:#666;margin-top:4px;">*Deze bestelling is onder voorbehoud van beschikbaarheid in stock.</div>';
     html+=checkoutSectionFooter_('shop');
     html+='</div>';
@@ -2366,7 +2394,7 @@ function renderCheckoutOverview_(overview){
     const upcoming=(overview.upcoming||[]).slice().sort((a,b)=>(a.date+(a.start||'')).localeCompare(b.date+(b.start||'')));
     if(upcoming.length){
       upcoming.forEach(s=>{
-        html+='<div class="checkout-overview-row"><span class="cor-label">'+escapeHtml(getSessionLabel(s.type))+' — '+escapeHtml(formatDate(s.date))+(s.start?' — '+escapeHtml(s.start+' – '+s.end):'')+(s.location?' — '+escapeHtml(s.location):'')+'</span>'+
+        html+='<div class="checkout-overview-row"><span class="cor-label">'+escapeHtml(getSessionLabel(s.type))+' ‚Äî '+escapeHtml(formatDate(s.date))+(s.start?' ‚Äî '+escapeHtml(s.start+' ‚Äì '+s.end):'')+(s.location?' ‚Äî '+escapeHtml(s.location):'')+'</span>'+
           (confirmed?'':'<button type="button" class="checkout-overview-remove" data-remove-session="'+escapeHtml(s.registrationId)+'" aria-label="Verwijderen">&times;</button>')+
         '</div>';
       });
@@ -2377,7 +2405,7 @@ function renderCheckoutOverview_(overview){
     if(cancelledSessions.length){
       html+='<div style="margin-top:10px;font-size:13px;font-weight:bold;color:#a00000;">Geannuleerd deze sessie:</div>';
       cancelledSessions.slice().sort((a,b)=>(a.date+(a.start||'')).localeCompare(b.date+(b.start||''))).forEach(s=>{
-        html+='<div class="checkout-overview-row"><span class="cor-label">'+escapeHtml(getSessionLabel(s.type))+' — '+escapeHtml(formatDate(s.date))+(s.start?' — '+escapeHtml(s.start+' – '+s.end):'')+'</span></div>';
+        html+='<div class="checkout-overview-row"><span class="cor-label">'+escapeHtml(getSessionLabel(s.type))+' ‚Äî '+escapeHtml(formatDate(s.date))+(s.start?' ‚Äî '+escapeHtml(s.start+' ‚Äì '+s.end):'')+'</span></div>';
       });
     }
     const credits=overview.credits||{'7AM Club':0,'Talent':0,'IDP':0};
@@ -2396,10 +2424,10 @@ function renderCheckoutOverview_(overview){
 
   const riseTegoedBalance=Number(overview.riseTegoedBalance||0);
   if(riseTegoedBalance>0){
-    html+='<div style="padding:10px 12px;background:#fff3f6;border:1px solid var(--pink);border-radius:8px;font-size:13px;margin-top:4px;"><strong>Rise Credit: €'+riseTegoedBalance.toFixed(2).replace('.',',')+'</strong> — wordt automatisch verrekend bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027 (niet geldig voor het eenmalige kledingpakket bij een eerste inschrijving).</div>';
+    html+='<div style="padding:10px 12px;background:#fff3f6;border:1px solid var(--pink);border-radius:8px;font-size:13px;margin-top:4px;"><strong>Rise Credit: ‚Ç¨'+riseTegoedBalance.toFixed(2).replace('.',',')+'</strong> ‚Äî wordt automatisch verrekend bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027 (niet geldig voor het eenmalige kledingpakket bij een eerste inschrijving).</div>';
   }
 
-  html+='<p style="font-size:13px;color:#666;margin-top:14px;">Bevestig elke sectie hierboven. Zodra alles bevestigd is, kan je definitief afronden — je ontvangt dan een bevestigingsmail met dit overzicht.</p>';
+  html+='<p style="font-size:13px;color:#666;margin-top:14px;">Bevestig elke sectie hierboven. Zodra alles bevestigd is, kan je definitief afronden ‚Äî je ontvangt dan een bevestigingsmail met dit overzicht.</p>';
 
   document.getElementById('checkoutModalText').innerHTML=html;
 
@@ -2432,9 +2460,9 @@ function closeCheckoutModal(){document.getElementById('checkoutModal').classList
 
 /*
  * Shown in place of the checkout overview once the confirmation email has
- * actually gone out — the visit has a clear, deliberate end point instead
+ * actually gone out ‚Äî the visit has a clear, deliberate end point instead
  * of just fading back into the page. There's no persisted session (no
- * cookies/localStorage — authToken lives only in this tab's memory), so a
+ * cookies/localStorage ‚Äî authToken lives only in this tab's memory), so a
  * plain reload is a real, complete logout, not just a UI reset.
  */
 function showCheckoutThankYou_(){
@@ -2442,7 +2470,7 @@ function showCheckoutThankYou_(){
   document.getElementById('checkoutModalText').innerHTML=
     '<p style="font-size:15px;line-height:1.6;">Je bevestigingsmail is verstuurd. We kijken ernaar uit je binnenkort te zien bij Rise Academy!</p>'+
     '<div style="margin-top:16px;padding:14px 16px;background:#fff3f6;border:1px solid var(--pink);border-radius:10px;font-size:13px;line-height:1.5;">'+
-      '<strong>Ken je toekomstige Rise-spelers?</strong> Wanneer iemand die jij doorverwijst zich voor het eerst inschrijft bij Rise Academy, ontvang jij €20 Rise Credit — automatisch te verrekenen bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027.'+
+      '<strong>Ken je toekomstige Rise-spelers?</strong> Wanneer iemand die jij doorverwijst zich voor het eerst inschrijft bij Rise Academy, ontvang jij ‚Ç¨20 Rise Credit ‚Äî automatisch te verrekenen bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027.'+
     '</div>';
   const actions=document.getElementById('checkoutModalActions');
   actions.innerHTML=
@@ -2451,7 +2479,7 @@ function showCheckoutThankYou_(){
   document.getElementById('checkoutModalStay').addEventListener('click',closeCheckoutModal);
   document.getElementById('checkoutModalLogout').addEventListener('click',()=>{
     // Now that a session can be remembered on this device (see
-    // rememberAuthToken_), logging out has to actually forget it —
+    // rememberAuthToken_), logging out has to actually forget it ‚Äî
     // otherwise the next visit would silently sign back in on its own.
     const tokenToRevoke=authToken;
     forgetAuthToken_();
@@ -2474,7 +2502,7 @@ function confirmCheckout(){
     pendingClothingOrderIdsForEmail=[];
     pendingCancelledSessionsForEmail=[];
     // The check-out widget stays available (it's persistent, not a one-shot
-    // "done" button) — just refresh its mini overview so it reflects that
+    // "done" button) ‚Äî just refresh its mini overview so it reflects that
     // Formules/Shop are cleared while any booked sessions still show.
     refreshCheckoutWidget_();
     showCheckoutThankYou_();
@@ -2527,9 +2555,9 @@ function confirmPurchaseAndBook(){
 /*
  * Shared renderer for the fixed green box (see .booking-confirmation CSS):
  * used after both session bookings and package purchases to confirm the
- * action. Emailing the overview is not a button here any more — that's the
+ * action. Emailing the overview is not a button here any more ‚Äî that's the
  * single persistent "Check-out" control top-right (see
- * refreshCheckoutWidget_()) — so this box only confirms and offers a way
+ * refreshCheckoutWidget_()) ‚Äî so this box only confirms and offers a way
  * to continue with another section.
  */
 function showConfirmationBox_(titleText,bodyHtml){
@@ -2559,7 +2587,7 @@ function showConfirmationBox_(titleText,bodyHtml){
 function showBookingConfirmation_(result){
   const sessions=(result&&Array.isArray(result.bookedSessions))?result.bookedSessions:[];
   const lines=sessions.map(s=>
-    '<li>'+escapeHtml(formatDate(s.date))+' · '+escapeHtml(getSessionLabel(s.type))+(s.start?' · '+escapeHtml(s.start+' – '+s.end):'')+'</li>'
+    '<li>'+escapeHtml(formatDate(s.date))+' ¬∑ '+escapeHtml(getSessionLabel(s.type))+(s.start?' ¬∑ '+escapeHtml(s.start+' ‚Äì '+s.end):'')+'</li>'
   ).join('');
   const body='<p>De geselecteerde trainingen zijn succesvol aan de agenda toegevoegd.</p>'+
     (lines?'<ul>'+lines+'</ul>':'<p>Je inschrijving is geregistreerd.</p>');
@@ -2585,7 +2613,7 @@ function finishBooking(result,message,orderIdsFromThisAction){
   // No email is sent here. Booking a session (like buying a package) is
   // saved immediately, but the confirmation email only goes out once the
   // customer explicitly clicks "Email mijn overzicht" on the green
-  // confirmation box — see openCheckoutOverview()/confirmCheckout(). Any
+  // confirmation box ‚Äî see openCheckoutOverview()/confirmCheckout(). Any
   // order IDs from this action (e.g. a mid-calendar top-up) join the same
   // pending list a package purchase would have added to.
   if(orderIdsFromThisAction && orderIdsFromThisAction.length){
@@ -2599,13 +2627,13 @@ function finishBooking(result,message,orderIdsFromThisAction){
   );
 
   // Refresh the visible calendar/status independently. The confirmation
-  // box is fixed-position (see CSS) so it's already on screen — no scroll
+  // box is fixed-position (see CSS) so it's already on screen ‚Äî no scroll
   // needed.
   refreshStatusAndCalendarSafe_();
 }
 
 function refreshStatusAndCalendarSafe_(){
-  // getPlayerStatus and getCalendar don't depend on each other — fire them
+  // getPlayerStatus and getCalendar don't depend on each other ‚Äî fire them
   // together instead of nesting one inside the other's callback, so this
   // background refresh takes as long as the slower of the two calls
   // instead of the sum of both.
@@ -2643,10 +2671,10 @@ function renderClothingGrid(){
     card.className='clothing-card';
     card.innerHTML='<div class="clothing-card-image">'+(item.image?'<img src="'+escapeHtml(item.image)+'" alt="'+escapeHtml(item.name)+'" loading="lazy">':'Foto volgt')+'</div>'+
       '<h3>'+escapeHtml(item.name)+'</h3>'+
-      '<div class="clothing-price">€'+Number(item.price).toFixed(2).replace('.',',')+' per stuk</div>';
+      '<div class="clothing-price">‚Ç¨'+Number(item.price).toFixed(2).replace('.',',')+' per stuk</div>';
 
     // One dropdown (when the item has real sizes) + one stepper per card,
-    // instead of listing every size as its own row — much less scrolling.
+    // instead of listing every size as its own row ‚Äî much less scrolling.
     // The stepper always reflects/edits whichever size is currently picked
     // in the dropdown; switching sizes doesn't lose quantities already set
     // on other sizes of the same item (still tracked in clothingCart, keyed
@@ -2676,12 +2704,12 @@ function renderClothingGrid(){
     row.appendChild(label);
     const stepper=document.createElement('div');
     stepper.className='qty-stepper';
-    stepper.innerHTML='<button type="button" class="qty-btn qty-minus" aria-label="Een minder">−</button><span class="qty-value">0</span><button type="button" class="qty-btn qty-plus" aria-label="Een meer">+</button>';
+    stepper.innerHTML='<button type="button" class="qty-btn qty-minus" aria-label="Een minder">‚àí</button><span class="qty-value">0</span><button type="button" class="qty-btn qty-plus" aria-label="Een meer">+</button>';
     row.appendChild(stepper);
     card.appendChild(row);
 
     // For items with multiple sizes, the stepper above only shows/edits
-    // whichever size is currently picked — this summary line lists every
+    // whichever size is currently picked ‚Äî this summary line lists every
     // size that already has a quantity, so ordering e.g. maat 140 x1 AND
     // maat 152 x1 of the same item stays visible without flipping through
     // the dropdown.
@@ -2787,10 +2815,10 @@ function renderClothingOverview(){
   const reference='Shop'+(name?' + '+name:'')+(birthYear?' + '+birthYear:'');
 
   const invoiceRows=lines.map(l=>
-    '<div class="invoice-row"><span>'+escapeHtml(l.name)+(l.size?' (maat '+escapeHtml(l.size)+')':'')+' x'+l.quantity+'</span><strong>€'+l.lineTotal.toFixed(2).replace('.',',')+'</strong></div>'
+    '<div class="invoice-row"><span>'+escapeHtml(l.name)+(l.size?' (maat '+escapeHtml(l.size)+')':'')+' x'+l.quantity+'</span><strong>‚Ç¨'+l.lineTotal.toFixed(2).replace('.',',')+'</strong></div>'
   ).join('');
   const riseTegoedRow=riseTegoedApplied>0
-    ? '<div class="invoice-row"><span>Rise Credit toegepast</span><strong>-€'+riseTegoedApplied.toFixed(2).replace('.',',')+'</strong></div>'
+    ? '<div class="invoice-row"><span>Rise Credit toegepast</span><strong>-‚Ç¨'+riseTegoedApplied.toFixed(2).replace('.',',')+'</strong></div>'
     : '';
 
   target.innerHTML=
@@ -2798,9 +2826,9 @@ function renderClothingOverview(){
       '<div class="invoice-title">Overzicht</div>'+
       '<div class="invoice-player">'+escapeHtml(name)+'</div>'+
       '<div class="invoice-items">'+invoiceRows+riseTegoedRow+'</div>'+
-      '<div class="invoice-total-row"><span>Totaal</span><strong>€'+total.toFixed(2).replace('.',',')+'</strong></div>'+
+      '<div class="invoice-total-row"><span>Totaal</span><strong>‚Ç¨'+total.toFixed(2).replace('.',',')+'</strong></div>'+
       '<div class="payment-details"><strong>Betaling via overschrijving</strong><br>IBAN: <strong>BE27 9735 5170 1173</strong><br>Mededeling: <strong>'+escapeHtml(reference)+'</strong></div>'+
-      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou €20 Rise Credit op voor je volgende aankoop.</div>'+
+      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou ‚Ç¨20 Rise Credit op voor je volgende aankoop.</div>'+
       '<div class="payment-note">*Deze bestelling is onder voorbehoud van beschikbaarheid in stock.<br>*De kledij wordt besteld zodra de betaling ontvangen is.</div>'+
     '</div>';
   renderClothingSidebar_(lines,total);
@@ -2808,7 +2836,7 @@ function renderClothingOverview(){
 
 /*
  * Small fixed-position echo of the same overview above, for wide screens
- * (see .clothing-sidebar CSS) — lets you keep an eye on your running total
+ * (see .clothing-sidebar CSS) ‚Äî lets you keep an eye on your running total
  * while scrolling through the catalog instead of only seeing it once you
  * scroll down to the bottom. Takes already-computed lines/total rather
  * than recalculating, so it can never disagree with the bottom overview.
@@ -2821,10 +2849,10 @@ function renderClothingSidebar_(lines,total){
     return;
   }
   const rows=lines.map(l=>
-    '<div class="clothing-sidebar-row"><span class="css-label">'+escapeHtml(l.name)+(l.size?' ('+escapeHtml(l.size)+')':'')+' x'+l.quantity+'</span><span>€'+Number(l.lineTotal).toFixed(2).replace('.',',')+'</span><button type="button" class="clothing-sidebar-remove" data-item="'+escapeHtml(l.itemId)+'" data-size="'+escapeHtml(l.size||'')+'" aria-label="Verwijderen">&times;</button></div>'
+    '<div class="clothing-sidebar-row"><span class="css-label">'+escapeHtml(l.name)+(l.size?' ('+escapeHtml(l.size)+')':'')+' x'+l.quantity+'</span><span>‚Ç¨'+Number(l.lineTotal).toFixed(2).replace('.',',')+'</span><button type="button" class="clothing-sidebar-remove" data-item="'+escapeHtml(l.itemId)+'" data-size="'+escapeHtml(l.size||'')+'" aria-label="Verwijderen">&times;</button></div>'
   ).join('');
   sidebar.innerHTML='<div class="clothing-sidebar-title">Mijn bestelling</div>'+rows+
-    '<div class="clothing-sidebar-total"><span>Totaal</span><span>€'+Number(total).toFixed(2).replace('.',',')+'</span></div>';
+    '<div class="clothing-sidebar-total"><span>Totaal</span><span>‚Ç¨'+Number(total).toFixed(2).replace('.',',')+'</span></div>';
   sidebar.querySelectorAll('.clothing-sidebar-remove').forEach(btn=>{
     btn.addEventListener('click',function(){
       delete clothingCart[btn.getAttribute('data-item')+'|'+btn.getAttribute('data-size')];
@@ -2834,7 +2862,7 @@ function renderClothingSidebar_(lines,total){
 }
 
 /*
- * "Save as you go" for Shop — called on every way of leaving the step (Ga
+ * "Save as you go" for Shop ‚Äî called on every way of leaving the step (Ga
  * terug, a top-tab jump, or the persistent Check-out button). If the cart
  * is empty this calls onDone() immediately with no server round trip.
  */
@@ -2845,7 +2873,7 @@ function submitPendingClothingIfNeeded_(onDone,onError){
   const items=lines.map(l=>({itemId:l.itemId,size:l.size,quantity:l.quantity}));
   runServer('createClothingOrder',[authToken,currentPlayerId,items,'Open'],result=>{
     clothingCart={};
-    // Don't email yet — hold this order ID until the customer explicitly
+    // Don't email yet ‚Äî hold this order ID until the customer explicitly
     // checks out (from any of the three sections: Formules, Shop or Mijn
     // Planning), same pattern as pendingPackageOrderIdsForEmail, so a
     // customer doing several things in one visit gets one combined email.
@@ -2887,7 +2915,7 @@ function goClothingForward(){
   },err=>{ setClothingNavDisabled_(false); showError(err); });
 }
 
-// Header logo (served from the same web app as the clothing photos — see
+// Header logo (served from the same web app as the clothing photos ‚Äî see
 // getSiteAssets_()/serveDriveImage_ in Code.gs). Silently stays hidden if
 // no logo has been uploaded yet.
 runServer('getSiteAssets',undefined,assets=>{
@@ -2918,8 +2946,8 @@ document.getElementById('modalConfirm').addEventListener('click',confirmPurchase
 document.getElementById('cancelConfirmNo').addEventListener('click',closeCancelConfirmModal);
 document.getElementById('cancelConfirmYes').addEventListener('click',confirmCancelBooking_);
 // checkoutModalCancel/checkoutModalConfirm are rebuilt (with their own
-// listeners) every time openCheckoutOverview() populates the modal — see
-// there — so nothing to bind on these original static elements here.
+// listeners) every time openCheckoutOverview() populates the modal ‚Äî see
+// there ‚Äî so nothing to bind on these original static elements here.
 document.getElementById('checkoutWidgetButton').addEventListener('click',()=>{
   leaveCurrentSectionThen_(()=>openCheckoutOverview(document.getElementById('checkoutWidgetButton')));
 });
@@ -2936,8 +2964,8 @@ document.addEventListener('click',e=>{
 /*
  * Whichever of Formules/Mijn Planning/Shop is currently on screen gets its
  * pending selection saved (same "save as you go" submit each step's own Ga
- * verder/Ga terug button uses) before jumping elsewhere — via a top-tab
- * click or the persistent Check-out button — so a top-tab jump can never
+ * verder/Ga terug button uses) before jumping elsewhere ‚Äî via a top-tab
+ * click or the persistent Check-out button ‚Äî so a top-tab jump can never
  * silently discard a selection the customer thinks is already saved.
  */
 function leaveCurrentSectionThen_(afterFn){
@@ -2972,7 +3000,7 @@ function leaveCurrentSectionThen_(afterFn){
   afterFn();
 }
 
-// Steps 2, 3 and 4 stay navigable back and forth once a player is selected —
+// Steps 2, 3 and 4 stay navigable back and forth once a player is selected ‚Äî
 // a customer who already confirmed a booking can still come back to buy
 // another package, instead of package selection being a one-way door.
 document.getElementById('step1').addEventListener('click',()=>{
