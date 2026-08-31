@@ -1073,9 +1073,14 @@ function hideCheckoutWidget_(){
   const widget=document.getElementById('checkoutWidget');
   if(widget) widget.classList.add('hidden');
 }
+// Last overview fetched for the widget, so a payment-summary change can
+// re-render it without paying for another server round-trip.
+let lastCheckoutOverview_=null;
+
 function refreshCheckoutWidget_(){
-  if(!authToken||!currentPlayerId){hideCheckoutWidget_();return;}
+  if(!authToken||!currentPlayerId){lastCheckoutOverview_=null;hideCheckoutWidget_();return;}
   runServer('getCheckoutOverview',[authToken,currentPlayerId,pendingPackageOrderIdsForEmail,pendingClothingOrderIdsForEmail,pendingCancelledSessionsForEmail],overview=>{
+    lastCheckoutOverview_=overview;
     renderCheckoutWidgetSummary_(overview);
   },err=>console.warn('Check-out overzicht kon niet worden vernieuwd:',err));
 }
@@ -1095,7 +1100,19 @@ function renderCheckoutWidgetSummary_(overview){
   // pending action.
   const hasCancellations=!!(overview.cancelledSessions&&overview.cancelledSessions.length);
 
-  if(!hasPackages&&!hasShop&&!hasSessions&&!hasCancellations){
+  /*
+   * The widget used to hide itself whenever nothing had been done in THIS
+   * visit, which meant a customer returning to an unpaid order saw no
+   * Check-out button at all — their balance was only visible further down
+   * the page. It now stays visible for any selected player: this visit's
+   * pending items when there are some, otherwise the outstanding balance
+   * carried over from earlier visits.
+   */
+  const outstandingFormules=Number((currentPaymentSummary&&currentPaymentSummary.total)||0);
+  const outstandingShop=Number((currentPaymentSummary&&currentPaymentSummary.clothingTotal)||0);
+  const hasOutstanding=(outstandingFormules+outstandingShop)>0;
+
+  if(!hasPackages&&!hasShop&&!hasSessions&&!hasCancellations&&!hasOutstanding){
     widget.classList.add('hidden');
     return;
   }
@@ -1107,6 +1124,16 @@ function renderCheckoutWidgetSummary_(overview){
   }
   if(hasShop){
     rows+='<div class="checkout-widget-row"><span>Shop</span><strong>€'+Number(overview.clothingTotal||0).toFixed(2).replace('.',',')+'</strong></div>';
+  }
+  // Nothing new this visit, but money is still owed — show that instead of
+  // an empty widget, flagged as open balance rather than a new order.
+  if(!hasPackages&&!hasShop&&hasOutstanding){
+    if(outstandingFormules>0){
+      rows+='<div class="checkout-widget-row"><span>Openstaand</span><strong>€'+outstandingFormules.toFixed(2).replace('.',',')+'</strong></div>';
+    }
+    if(outstandingShop>0){
+      rows+='<div class="checkout-widget-row"><span>Openstaand shop</span><strong>€'+outstandingShop.toFixed(2).replace('.',',')+'</strong></div>';
+    }
   }
   if(hasSessions){
     const n=overview.upcoming.length;
@@ -1122,6 +1149,15 @@ function renderCheckoutWidgetSummary_(overview){
 
 function renderPaymentSummary(summary){
   currentPaymentSummary=summary||null;
+  // The Check-out widget falls back to this outstanding balance when the
+  // visit itself has nothing pending, so it has to be re-rendered whenever
+  // the balance changes — otherwise it would keep showing a stale total
+  // (or stay hidden on a fresh login with an unpaid order). Re-rendered
+  // from the last overview rather than re-fetching, so this stays free.
+  try{
+    if(lastCheckoutOverview_) renderCheckoutWidgetSummary_(lastCheckoutOverview_);
+    else refreshCheckoutWidget_();
+  }catch(e){}
   const panel=document.getElementById('paymentPanel');
   const target=document.getElementById('paymentSummary');
   if(!panel||!target)return;
@@ -1259,8 +1295,42 @@ function renderPackagePaymentPreview(){
     !accountAlreadyHasClothing &&
     rows.some(row=>row.type==='Talent'||row.type==='IDP');
 
-  const subtotal=rows.reduce((sum,row)=>sum+row.price,0);
-  const clothing=clothingNeeded?45:0;
+  /*
+   * Mirrors the best-price rule in calculatePurchase_(): the server prices
+   * a new selection together with whatever the player still has open and
+   * unpaid of the same type, so 5 IDP added to an open 5 IDP costs the
+   * 10-pack difference (EUR 140) rather than another full EUR 160. The
+   * preview has to use the same rule or it would quote a price the order
+   * does not actually charge.
+   */
+  const openByType=(currentPaymentSummary&&currentPaymentSummary.orders||[])
+    .filter(o=>String(o.paymentStatus||'Open').toLowerCase()!=='paid')
+    .reduce((acc,o)=>{
+      const t=o.type; if(!t)return acc;
+      acc[t]=acc[t]||{quantity:0,charged:0};
+      acc[t].quantity+=Number(o.quantity||0);
+      // sessionPriceGross excludes the kledingpakket, matching the basis
+      // getOpenSessionOrderTotals_() uses server-side. Older payloads
+      // without the field fall back to the total, which at worst quotes a
+      // slightly high preview rather than under-charging.
+      acc[t].charged+=Number(o.sessionPriceGross!=null?o.sessionPriceGross:o.total||0);
+      return acc;
+    },{});
+
+  let bestPriceSaving=0;
+  const subtotal=rows.reduce((sum,row)=>{
+    const open=openByType[row.type];
+    if(!open||!(open.quantity>0)) return sum+row.price;
+    const combined=packagePrice_(row.type,open.quantity+row.quantity);
+    const incremental=Math.max(0,combined-open.charged);
+    bestPriceSaving+=Math.max(0,row.price-incremental);
+    return sum+incremental;
+  },0);
+  // Price comes from the server's PRICING table (same value the order is
+  // charged from) rather than a literal here, so the two cannot drift
+  // apart. Falls back to 45 only if an older status payload lacks it.
+  const clothingUnitPrice=Number((currentStatus&&currentStatus.clothingPackagePrice)||45);
+  const clothing=clothingNeeded?clothingUnitPrice:0;
   // Rise Credit (referral credit) applies only to session packages, never
   // to clothing — mirrors calculatePurchase_() server-side.
   const riseTegoedAvailable=Number((currentStatus&&currentStatus.riseTegoedBalance)||0);
@@ -1292,7 +1362,14 @@ function renderPackagePaymentPreview(){
   ).join('');
 
   const clothingRow=clothingNeeded
-    ? '<div class="invoice-row"><span>Kledingpakket (shirt, short en sokken)</span><strong>€45,00</strong></div>'
+    ? '<div class="invoice-row"><span>Kledingpakket (shirt, short en sokken)</span><strong>€'+clothing.toFixed(2).replace('.',',')+'</strong></div>'
+    : '';
+
+  // Shown when combining this selection with an open order of the same
+  // type reaches a cheaper tier — e.g. 5 IDP added to an open 5 IDP is
+  // billed as the EUR 300 10-pack, not two EUR 160 5-packs.
+  const bestPriceRow=bestPriceSaving>0
+    ? '<div class="invoice-row"><span>Voordeligste pakketprijs toegepast</span><strong>-€'+bestPriceSaving.toFixed(2).replace('.',',')+'</strong></div>'
     : '';
 
   const riseTegoedRow=riseTegoedApplied>0
@@ -1322,7 +1399,7 @@ function renderPackagePaymentPreview(){
     '<div class="payment-preview-card">'+
       '<div class="invoice-title">Overzicht</div>'+
       '<div class="invoice-player">'+escapeHtml(name)+'</div>'+
-      '<div class="invoice-items">'+invoiceRows+clothingRow+riseTegoedRow+'</div>'+
+      '<div class="invoice-items">'+invoiceRows+bestPriceRow+clothingRow+riseTegoedRow+'</div>'+
       minFiveWarning+
       '<div class="invoice-total-row"><span>Totaal</span><strong>€'+total.toFixed(2).replace('.',',')+'</strong></div>'+
       '<div class="payment-details">'+
@@ -1758,7 +1835,7 @@ function renderPackages(status){
     selectedNow.some(row=>row.type==='Talent'||row.type==='IDP');
 
   document.getElementById('clothingNote').innerHTML=needsClothing
-    ? '<div class="clothing-note"><strong>Kledingpakket:</strong> bij je eerste Talent/IDP-inschrijving wordt automatisch één kledingpakket (shirt, short en sokken) toegevoegd voor €45.</div>'
+    ? '<div class="clothing-note"><strong>Kledingpakket:</strong> bij je eerste Talent/IDP-inschrijving wordt automatisch één kledingpakket (shirt, short en sokken) toegevoegd voor €'+Number((status&&status.clothingPackagePrice)||45)+'.</div>'
     : '';
 
   const totalCredits=Number(status.credits['7AM Club']||0)+Number(status.credits.Talent||0)+Number(status.credits.IDP||0);
@@ -1780,21 +1857,61 @@ function packageSelections(){
  * no server round trip — navigation only pauses for the moment it takes to
  * actually write a real selection.
  */
+/*
+ * Guards against the same pending selection being submitted twice.
+ *
+ * Every exit from the Formules step saves "as you go", but not all of
+ * those exits are disabled while a save is in flight — the top step tabs
+ * are plain <div>s (so el.disabled does nothing to them) and the
+ * persistent Check-out button routes through leaveCurrentSectionThen_ as
+ * well. Clicking one of those while Ga verder was still saving fired a
+ * second identical createPackagePurchases, which credited the pack twice
+ * (5 sessions chosen -> 10 credited).
+ *
+ * Two things fix that here: an in-flight flag that makes any overlapping
+ * call wait for the running save rather than starting its own, and
+ * clearing the pending selection BEFORE the request goes out instead of
+ * in its success callback, so there is nothing left for a second call to
+ * resubmit even if one slips through. The server also de-duplicates
+ * identical orders within a short window, so a stale client cannot
+ * double-charge either.
+ */
+let packageSubmitInFlight_=false;
+let packageSubmitWaiters_=[];
+
 function submitPendingPackagesIfNeeded_(onDone,onError){
+  if(packageSubmitInFlight_){
+    // A save is already running for this same selection — hand this
+    // caller's continuation to it instead of submitting again.
+    packageSubmitWaiters_.push({onDone:onDone,onError:onError});
+    return;
+  }
+
   const selections=packageSelections();
   if(!selections.length){ onDone(); return; }
+
+  // Cleared up front, not on success: the selection is now "in the
+  // server's hands", and leaving it in place is what allowed a second
+  // exit click to resubmit it. Restored below if the request fails.
+  const submittedTiers=packageSelectedTiers;
+  const submittedLoose=packageLooseCounts;
+  packageSelectedTiers={'7AM Club':new Set(),Talent:new Set(),IDP:new Set()};
+  packageLooseCounts={'7AM Club':0,Talent:0,IDP:0};
+
+  packageSubmitInFlight_=true;
+  const finish_=(fnName,arg)=>{
+    packageSubmitInFlight_=false;
+    const waiters=packageSubmitWaiters_;
+    packageSubmitWaiters_=[];
+    if(fnName==='done') onDone(); else onError(arg);
+    waiters.forEach(w=>{ try{ if(fnName==='done') w.onDone(); else w.onError(arg); }catch(e){ console.warn(e); } });
+  };
 
   runServer('createPackagePurchases',[authToken,currentPlayerId,selections,'Open'],result=>{
     if(result.paymentSummary){
       currentPaymentSummary=result.paymentSummary;
       renderPaymentSummary(result.paymentSummary);
     }
-
-    // Written successfully — start the next visit to this step from a
-    // clean slate instead of showing the same chips as if still pending
-    // (which would otherwise resubmit the same order again).
-    packageSelectedTiers={'7AM Club':new Set(),Talent:new Set(),IDP:new Set()};
-    packageLooseCounts={'7AM Club':0,Talent:0,IDP:0};
 
     if(result.orderIds && result.orderIds.length){
       pendingPackageOrderIdsForEmail=pendingPackageOrderIdsForEmail.concat(result.orderIds);
@@ -1815,20 +1932,35 @@ function submitPendingPackagesIfNeeded_(onDone,onError){
         renderFilters();
         loadPaymentSummary();
       }
-      onDone();
+      finish_('done');
     },err=>{
       console.warn('Status na pakket kon niet worden vernieuwd:',err);
       loadPaymentSummary();
-      onDone();
+      finish_('done');
     });
-  },onError);
+  },err=>{
+    // Nothing was written, so put the customer's selection back exactly as
+    // it was rather than silently losing it along with the failed request.
+    packageSelectedTiers=submittedTiers;
+    packageLooseCounts=submittedLoose;
+    try{ if(currentStatus) renderPackages(currentStatus); }catch(e){}
+    try{ renderPackagePaymentPreview(); }catch(e){}
+    finish_('error',err);
+  });
 }
 
 function setPackageNavDisabled_(disabled){
+  // The two Ga verder/Ga terug buttons are real <button>s, so `disabled`
+  // works on them. The step tabs are <div>s (where `disabled` is a no-op)
+  // and the Check-out button also routes through leaveCurrentSectionThen_,
+  // so those are marked with a class the click handlers check instead —
+  // belt and braces alongside the in-flight guard in
+  // submitPendingPackagesIfNeeded_.
   ['packageBackButton','packageForwardButton'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.disabled=disabled;
   });
+  document.body.classList.toggle('nav-busy',!!disabled);
 }
 function goPackagesBack(){
   // A pack under the 5-session minimum was never a valid order to begin
@@ -2985,6 +3117,17 @@ document.addEventListener('click',e=>{
  * silently discard a selection the customer thinks is already saved.
  */
 function leaveCurrentSectionThen_(afterFn){
+  // Single choke point for the step tabs and the Check-out button. While a
+  // package save is running, queue the jump behind it instead of kicking
+  // off a second save of the same selection — the tabs are <div>s, so they
+  // cannot be disabled the way the Ga verder/Ga terug buttons are.
+  if(packageSubmitInFlight_){
+    packageSubmitWaiters_.push({
+      onDone:()=>{ try{ afterFn(); }catch(e){ console.warn(e); } },
+      onError:()=>{}
+    });
+    return;
+  }
   const packagePanel=document.getElementById('packagePanel');
   const calendarPanel=document.getElementById('calendarPanel');
   const clothingPanel=document.getElementById('clothingPanel');
