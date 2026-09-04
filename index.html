@@ -555,7 +555,10 @@
         <div class="field"><label>Foto/Video Toestemming</label>
           <select id="photoConsent"><option value="Ja">Ja</option><option value="Nee">Nee</option></select>
         </div>
-        <div class="field full" id="referredByField"><label>Ben je doorverwezen door een bestaande deelnemer? Zo ja, vul dan hieronder de naam in.</label><input id="referredBy" placeholder="Volledige naam van de deelnemer"></div>
+        <div id="referredByField">
+          <div class="field full"><label>Ben je doorverwezen door een bestaande deelnemer? Vul dan hieronder de volledige naam in.</label><input id="referredByPlayer" placeholder="Volledige naam van de deelnemer"></div>
+          <div class="field full"><label>Ben je doorverwezen door een club? Vul dan hieronder de clubcode in (zoals vermeld op de flyer of communicatie van je club).</label><input id="referredByClub" placeholder="Clubcode (bv. SKW 5386)"></div>
+        </div>
       </div>
       <button class="primary" id="registerPlayerButton">Speler registreren en verder</button>
     </div>
@@ -1205,7 +1208,7 @@ function renderPaymentSummary(summary){
   }
 
   target.innerHTML=sections+
-    '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou €20 Rise Credit op voor je volgende aankoop.</div>'+
+    '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven (min. 5 sessies) leveren jou €15 (7AM Club) of €20 (Talent/IDP) Rise Credit op voor je volgende aankoop.</div>'+
     '<div class="payment-note">'+
       '*Eenmalige sessies kunnen worden bijgeboekt nadat er reeds een pakket van minstens 5 sessies werd geboekt.<br>'+
       '*Je aangekochte sessies zijn geldig doorheen het hele seizoen 2026-2027'+
@@ -1269,13 +1272,33 @@ function getSelectedPackageRows(){
   return rows;
 }
 // Shared by renderPackagePaymentPreview() (to show the warning/disable
-// forward nav) and goPackagesBack() (to decide whether a partial, invalid
-// selection should just be dropped rather than submitted on the way out).
-function packageFirstTimeRows_(rows){
-  return !!currentStatus && rows.filter(row=>
-    (row.type==='Talent'||row.type==='IDP') &&
-    !currentStatus['has'+row.type]
-  );
+// forward nav), goPackagesBack() and leaveCurrentSectionThen_() (to decide
+// whether a partial, invalid selection should just be dropped rather than
+// submitted on the way out).
+//
+// Two independent "first purchase" minimums: Talent+IDP share one pooled
+// minimum of 5 (a 5-pack in either covers loose sessions bought in the
+// other — mirrors the combined check in createPackagePurchases
+// server-side), while 7AM Club has its own separate minimum of 5, never
+// pooled with the other two (mirrors calculatePurchase_() server-side,
+// which checks 7AM Club independently). Returns one entry per violated
+// group, empty if nothing is under minimum.
+function packageMinimumViolations_(rows){
+  if(!currentStatus) return [];
+  const violations=[];
+
+  const tiRows=rows.filter(row=>(row.type==='Talent'||row.type==='IDP') && !currentStatus['has'+row.type]);
+  const tiSum=tiRows.reduce((sum,r)=>sum+r.quantity,0);
+  if(tiRows.length && tiSum<5){
+    violations.push({rows:tiRows, label:tiRows.map(r=>r.label).join(' en '), combined:true});
+  }
+
+  const amRow=rows.find(row=>row.type==='7AM Club');
+  if(amRow && !currentStatus.has7AM && amRow.quantity<5){
+    violations.push({rows:[amRow], label:amRow.label, combined:false});
+  }
+
+  return violations;
 }
 
 function renderPackagePaymentPreview(){
@@ -1376,22 +1399,20 @@ function renderPackagePaymentPreview(){
     ? '<div class="invoice-row"><span>Rise Credit toegepast</span><strong>-€'+riseTegoedApplied.toFixed(2).replace('.',',')+'</strong></div>'
     : '';
 
-  // A first Talent/IDP purchase must total at least 5 sessions — combined
-  // across Talent+IDP, not per type, so a 5-pack in one covers the minimum
-  // for loose sessions added in the other (mirrors the combined check in
-  // createPackagePurchases server-side). The stepper already blocks a lone
+  // First-purchase minimums (Talent+IDP pooled, 7AM Club independent — see
+  // packageMinimumViolations_) — the stepper already blocks a lone
   // first-time box from starting loose-only, but a pack can still be
-  // deselected again after loose sessions were added on top, landing the
-  // combined total under 5 — catch that here as an explicit, actionable
-  // warning (and block the confirm button) rather than a server error.
-  const firstTimeRows=packageFirstTimeRows_(rows);
-  const firstTimeSum=firstTimeRows?firstTimeRows.reduce((sum,r)=>sum+r.quantity,0):0;
-  const minFiveViolation=!!(firstTimeRows&&firstTimeRows.length&&firstTimeSum<5);
-  const minFiveWarning=minFiveViolation
-    ? '<div class="min-five-warning">Let op: een eerste inschrijving voor '+
-        firstTimeRows.map(r=>escapeHtml(r.label)).join(' en ')+
-        ' vereist minimum 5 sessies in totaal. Voeg losse sessies toe of kies een groter pakket.</div>'
-    : '';
+  // deselected again after loose sessions were added on top, landing a
+  // group under 5 — catch that here as an explicit, actionable warning
+  // (and block the confirm button) rather than a server error.
+  const minFiveViolations=packageMinimumViolations_(rows);
+  const minFiveViolation=minFiveViolations.length>0;
+  const minFiveWarning=minFiveViolations.map(v=>
+    '<div class="min-five-warning">Let op: een eerste inschrijving voor '+
+      escapeHtml(v.label)+
+      ' vereist minimum 5 sessies'+(v.combined?' in totaal':'')+
+      '. Voeg losse sessies toe of kies een groter pakket.</div>'
+  ).join('');
   const packageForwardEl=document.getElementById('packageForwardButton');
   if(packageForwardEl) packageForwardEl.disabled=minFiveViolation;
 
@@ -1407,7 +1428,7 @@ function renderPackagePaymentPreview(){
         'IBAN: <strong>BE27 9735 5170 1173</strong><br>'+
         'Mededeling: <strong>'+escapeHtml(reference)+'</strong>'+
       '</div>'+
-      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou €20 Rise Credit op voor je volgende aankoop.</div>'+
+      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven (min. 5 sessies) leveren jou €15 (7AM Club) of €20 (Talent/IDP) Rise Credit op voor je volgende aankoop.</div>'+
       '<div class="payment-note">'+
         '*Eenmalige sessies kunnen worden bijgeboekt nadat er reeds een pakket van minstens 5 sessies werd geboekt.<br>'+
         '*Je aangekochte sessies zijn geldig doorheen het hele seizoen 2026-2027'+
@@ -1530,7 +1551,7 @@ function resetPlayerFormToRegisterMode_(){
    'strength1','strength2','strength3','workpoint1','workpoint2','workpoint3',
    'parentName','parentPhone',
    'parent2Name','parent2Email','parent2Phone','shirtSize','shortsSize','socksSize',
-   'medicalInfo','referredBy'].forEach(id=>{ document.getElementById(id).value=''; });
+   'medicalInfo','referredByPlayer','referredByClub'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('photoConsent').value='Ja';
 }
 function toggleNewPlayer(){
@@ -1593,9 +1614,29 @@ function openEditPlayerForm(){
   form.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function val(id){return document.getElementById(id).value.trim();}
+
+// Two separate, clearly-labeled fields on screen (a referring player vs a
+// club code from the club's own flyer/communication), but one referral can
+// only ever be credited to one of them — the backend still stores/matches
+// a single "Referred By" value (see grantReferralRewardIfApplicable_ in
+// Code.gs, which already checks a club code first, then a player name).
+// Throws if both are filled in, so the customer is asked to pick one
+// rather than silently having one of the two ignored.
+function getReferredByValue_(){
+  const playerName=val('referredByPlayer');
+  const clubCode=val('referredByClub');
+  if(playerName && clubCode){
+    throw new Error('Vul slechts één van beide velden in: ofwel de naam van de deelnemer, ofwel een clubcode — niet beide.');
+  }
+  return playerName || clubCode;
+}
+
 function registerNewPlayer(){
   if(playerFormMode==='edit'){ saveExistingPlayerEdits_(); return; }
-  const data={firstName:val('firstName'),lastName:val('lastName'),dateOfBirth:val('dateOfBirth'),currentClub:val('currentClub'),level:val('level'),preferredPosition1:val('preferredPosition1'),preferredPosition2:val('preferredPosition2'),strength1:val('strength1'),strength2:val('strength2'),strength3:val('strength3'),workpoint1:val('workpoint1'),workpoint2:val('workpoint2'),workpoint3:val('workpoint3'),parentName:val('parentName'),parentEmail:val('parentEmail'),parentPhone:val('parentPhone'),shirtSize:val('shirtSize'),shortsSize:val('shortsSize'),socksSize:val('socksSize'),parent2Name:val('parent2Name'),parent2Email:val('parent2Email'),parent2Phone:val('parent2Phone'),medicalInfo:val('medicalInfo'),photoConsent:document.getElementById('photoConsent').value,referredBy:val('referredBy')};
+  let referredBy;
+  try{ referredBy=getReferredByValue_(); }
+  catch(err){ showError(err); return; }
+  const data={firstName:val('firstName'),lastName:val('lastName'),dateOfBirth:val('dateOfBirth'),currentClub:val('currentClub'),level:val('level'),preferredPosition1:val('preferredPosition1'),preferredPosition2:val('preferredPosition2'),strength1:val('strength1'),strength2:val('strength2'),strength3:val('strength3'),workpoint1:val('workpoint1'),workpoint2:val('workpoint2'),workpoint3:val('workpoint3'),parentName:val('parentName'),parentEmail:val('parentEmail'),parentPhone:val('parentPhone'),shirtSize:val('shirtSize'),shortsSize:val('shortsSize'),socksSize:val('socksSize'),parent2Name:val('parent2Name'),parent2Email:val('parent2Email'),parent2Phone:val('parent2Phone'),medicalInfo:val('medicalInfo'),photoConsent:document.getElementById('photoConsent').value,referredBy:referredBy};
   const button=document.getElementById('registerPlayerButton');button.disabled=true;button.textContent='Bezig met registreren...';
   runServer('registerPlayer',[authToken,data],result=>{
     currentPlayerId=result.playerId;
@@ -1657,7 +1698,16 @@ function renderPackages(status){
   // unlock the loose-session stepper in the other. Since every pack tier
   // starts at 5, any pack selected in either first-time card already
   // satisfies the combined minimum on its own.
-  function combinedFirstTimeTotal_(){
+  //
+  // 7AM Club has the same "first purchase needs 5" rule, but as its own
+  // independent minimum — not pooled with Talent/IDP (mirrors
+  // calculatePurchase_() server-side, which checks 7AM Club on its own).
+  function firstTimeTotalForType_(forType){
+    if(forType==='7AM Club'){
+      let tierSum=0;
+      packageSelectedTiers['7AM Club'].forEach(n=>{ tierSum+=n; });
+      return tierSum+Number(packageLooseCounts['7AM Club']||0);
+    }
     let sum=0;
     ['Talent','IDP'].forEach(t=>{
       if(status['has'+t]) return;
@@ -1681,12 +1731,13 @@ function renderPackages(status){
       card.className='package-card '+theme;
       const key=type==='7AM Club'?'7AM Club':type;
       const opts=packageOptions(type);
-      // A first Talent/IDP purchase must total at least 5 sessions (existing
-      // business rule, enforced server-side too) — the stepper still shows
-      // for these cards so a first order can be "5-pack + 2 loose", but the
-      // loose stepper stays locked at 0 until a pack is picked, so a first
-      // order can never be loose-only and land under 5.
-      const first=(type==='Talent'&&!status.hasTalent)||(type==='IDP'&&!status.hasIDP);
+      // A first purchase of any of these three must total at least 5
+      // sessions (existing business rule for Talent/IDP, now applied to
+      // 7AM Club too, enforced server-side as well) — the stepper still
+      // shows for these cards so a first order can be "5-pack + 2 loose",
+      // but the loose stepper stays locked at 0 until a pack is picked, so
+      // a first order can never be loose-only and land under 5.
+      const first=(type==='Talent'&&!status.hasTalent)||(type==='IDP'&&!status.hasIDP)||(type==='7AM Club'&&!status.has7AM);
       const unitPrice=packagePrice_(type,1);
 
       card.innerHTML='<h3>'+label+'</h3><div class="balance">Huidige sessies: <strong>'+Number(credits[key]||0)+'</strong></div>';
@@ -1755,7 +1806,7 @@ function renderPackages(status){
       function refreshQtyButtons_(){
         const loose=Number(qtyValueEl.textContent||'0');
         qtyMinusBtn.disabled=loose<=0;
-        qtyPlusBtn.disabled=loose>=4 || (first && combinedFirstTimeTotal_()===0);
+        qtyPlusBtn.disabled=loose>=4 || (first && firstTimeTotalForType_(type)===0);
       }
       allRefreshQtyFns_.push(refreshQtyButtons_);
       refreshChipStates_();
@@ -1777,7 +1828,7 @@ function renderPackages(status){
 
       qtyPlusBtn.addEventListener('click',function(){
         let val=Number(qtyValueEl.textContent||'0');
-        if(val>=4 || (first && combinedFirstTimeTotal_()===0)) return;
+        if(val>=4 || (first && firstTimeTotalForType_(type)===0)) return;
         val+=1;
         // If 4 loose sessions (with no pack picked) would cost exactly the
         // same as the 5-pack (true for 7AM Club today: 4x€15 = €60 = the
@@ -1812,7 +1863,9 @@ function renderPackages(status){
         updateTotal_();
       });
 
-      if(first){
+      if(first && type==='7AM Club'){
+        card.insertAdjacentHTML('beforeend','<div class="package-note">Eerste inschrijving: minimum 5 sessies voor 7AM Club. Kies hierboven een pakket om ook losse sessies toe te voegen.</div>');
+      } else if(first){
         card.insertAdjacentHTML('beforeend','<div class="package-note">Eerste inschrijving: minimum 5 sessies in totaal voor Talent Sessions en IDP Sessions samen. Kies hierboven een pakket — in dit vak of in het andere — om ook losse sessies toe te voegen.</div>');
       }
       fragment.appendChild(card);
@@ -1968,9 +2021,7 @@ function goPackagesBack(){
   // confirming it, so drop it here instead of submitting and hitting the
   // same server error the (disabled) forward button already guards against.
   const rows=getSelectedPackageRows();
-  const firstTimeRows=packageFirstTimeRows_(rows);
-  const firstTimeSum=firstTimeRows?firstTimeRows.reduce((sum,r)=>sum+r.quantity,0):0;
-  if(firstTimeRows&&firstTimeRows.length&&firstTimeSum<5){
+  if(packageMinimumViolations_(rows).length){
     packageSelectedTiers={'7AM Club':new Set(),Talent:new Set(),IDP:new Set()};
     packageLooseCounts={'7AM Club':0,Talent:0,IDP:0};
   }
@@ -2618,7 +2669,7 @@ function showCheckoutThankYou_(){
   document.getElementById('checkoutModalText').innerHTML=
     '<p style="font-size:15px;line-height:1.6;">Je bevestigingsmail is verstuurd. We kijken ernaar uit je binnenkort te zien bij Rise Academy!</p>'+
     '<div style="margin-top:16px;padding:14px 16px;background:#fff3f6;border:1px solid var(--pink);border-radius:10px;font-size:13px;line-height:1.5;">'+
-      '<strong>Ken je toekomstige Rise-spelers?</strong> Wanneer iemand die jij doorverwijst zich voor het eerst inschrijft bij Rise Academy, ontvang jij €20 Rise Credit — automatisch te verrekenen bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027.'+
+      '<strong>Ken je toekomstige Rise-spelers?</strong> Wanneer iemand die jij doorverwijst zich voor het eerst inschrijft bij Rise Academy (minimum 5 sessies), ontvang jij €15 Rise Credit voor 7AM Club of €20 voor Talent/IDP Sessions — automatisch te verrekenen bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027.'+
     '</div>';
   const actions=document.getElementById('checkoutModalActions');
   actions.innerHTML=
@@ -2976,7 +3027,7 @@ function renderClothingOverview(){
       '<div class="invoice-items">'+invoiceRows+riseTegoedRow+'</div>'+
       '<div class="invoice-total-row"><span>Totaal</span><strong>€'+total.toFixed(2).replace('.',',')+'</strong></div>'+
       '<div class="payment-details"><strong>Betaling via overschrijving</strong><br>IBAN: <strong>BE27 9735 5170 1173</strong><br>Mededeling: <strong>'+escapeHtml(reference)+'</strong></div>'+
-      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven leveren jou €20 Rise Credit op voor je volgende aankoop.</div>'+
+      '<div class="referral-tip">Tip: doorverwijzingen die zich inschrijven (min. 5 sessies) leveren jou €15 (7AM Club) of €20 (Talent/IDP) Rise Credit op voor je volgende aankoop.</div>'+
       '<div class="payment-note">*Deze bestelling is onder voorbehoud van beschikbaarheid in stock.<br>*De kledij wordt besteld zodra de betaling ontvangen is.</div>'+
     '</div>';
   renderClothingSidebar_(lines,total);
@@ -3136,9 +3187,7 @@ function leaveCurrentSectionThen_(afterFn){
     // was never valid, so a tab jump away from it drops it instead of
     // submitting and hitting the server's minimum-5 error.
     const rows=getSelectedPackageRows();
-    const firstTimeRows=packageFirstTimeRows_(rows);
-    const firstTimeSum=firstTimeRows?firstTimeRows.reduce((sum,r)=>sum+r.quantity,0):0;
-    if(firstTimeRows&&firstTimeRows.length&&firstTimeSum<5){
+    if(packageMinimumViolations_(rows).length){
       packageSelectedTiers={'7AM Club':new Set(),Talent:new Set(),IDP:new Set()};
       packageLooseCounts={'7AM Club':0,Talent:0,IDP:0};
     }
