@@ -414,7 +414,7 @@
   </div>
 
   <section class="panel auth-box" id="authPanel">
-    <h2 style="margin-top:0">Ouder / voogd</h2>
+    <h2 style="margin-top:0">Ouder / voogd / Club</h2>
     <div id="authIntro" class="message info">Vul je e-mailadres in om toegang te krijgen tot de registratietool.</div>
     <div class="field">
       <label for="authEmail">E-mailadres *</label>
@@ -435,6 +435,11 @@
       </div>
     </div>
     <div id="authMessage"></div>
+  </section>
+
+  <section class="panel hidden" id="clubDashboardPanel">
+    <h2 id="clubDashboardTitle">Club</h2>
+    <div id="clubDashboardBody"><div class="loading">Doorverwijzingen worden geladen...</div></div>
   </section>
 
   <section class="panel hidden" id="playerPanel">
@@ -851,8 +856,9 @@ function attemptResumeSession_(){
     authToken=result.token;
     authEmail=result.email;
     rememberAuthToken_(authToken,authEmail);
-    markAuthVerifiedUI_();
-    showAuthorizedPlayers(result.players||[]);
+    markAuthVerifiedUI_(!!result.club);
+    if(result.club){ showClubDashboard_(result.club); }
+    else{ showAuthorizedPlayers(result.players||[]); }
   },()=>{
     // Expired/revoked — silently fall back to the normal email+code screen
     // rather than showing an error for something the customer never
@@ -884,17 +890,69 @@ function logoutAndReset_(){
   if(tokenToRevoke){ runServer('logoutSession',[tokenToRevoke],()=>{},()=>{}); }
   location.reload();
 }
-function markAuthVerifiedUI_(){
-  document.getElementById('authPanel').querySelector('h2').textContent='Ouder / voogd geverifieerd';
+function markAuthVerifiedUI_(isClub){
+  document.getElementById('authPanel').querySelector('h2').textContent=isClub?'Club geverifieerd':'Ouder / voogd geverifieerd';
   document.getElementById('authIntro').textContent='Toegang verleend voor '+authEmail+'.';
   document.getElementById('authEmail').readOnly=true;
   document.getElementById('sendCodeButton').classList.add('hidden-force');
   document.getElementById('verificationArea').classList.add('hidden-force');
+  const scopeText=isClub
+    ? 'Je kunt nu de doorverwijzingen van je club bekijken.'
+    : 'Je kunt nu alleen de speler(s) beheren die aan dit e-mailadres gekoppeld zijn.';
   document.getElementById('authMessage').innerHTML=
     '<div class="message success">E-mailadres succesvol geverifieerd.</div>'+
-    '<div class="verified-email">Je kunt nu alleen de speler(s) beheren die aan dit e-mailadres gekoppeld zijn. Dit toestel blijft aangemeld. <button type="button" class="link-button" id="logoutLink">Uitloggen</button></div>';
+    '<div class="verified-email">'+scopeText+' Dit toestel blijft aangemeld. <button type="button" class="link-button" id="logoutLink">Uitloggen</button></div>';
   const logoutLink=document.getElementById('logoutLink');
   if(logoutLink) logoutLink.addEventListener('click',logoutAndReset_);
+}
+
+/*
+ * A club's own read-only view of what they're owed — reached the moment
+ * their verified email matches an active CLUBS row (see
+ * findActiveClubByEmail_ in Code.gs), instead of the normal player
+ * selection/registration flow. Never shown to a parent — the club code
+ * printed on flyers never functions as a login credential, only the
+ * verified Contact Email does.
+ */
+function showClubDashboard_(club){
+  document.getElementById('playerPanel').classList.add('hidden');
+  document.getElementById('newPlayerForm').classList.add('hidden');
+  const panel=document.getElementById('clubDashboardPanel');
+  panel.classList.remove('hidden');
+  document.getElementById('clubDashboardTitle').textContent=club.name+' ('+club.code+')';
+  const body=document.getElementById('clubDashboardBody');
+  body.innerHTML='<div class="loading">Doorverwijzingen worden geladen...</div>';
+  runServer('getClubReferralStatus',[authToken],status=>{
+    renderClubDashboard_(status);
+  },err=>{
+    body.innerHTML='<div class="message error">'+escapeHtml(err&&err.message?err.message:'Kon doorverwijzingen niet laden.')+'</div>';
+  });
+}
+
+function renderClubDashboard_(status){
+  const body=document.getElementById('clubDashboardBody');
+  const rows=(status.referrals||[]).map(r=>
+    '<tr>'+
+      '<td style="padding:8px 0;border-bottom:1px solid #eee">'+escapeHtml(formatDate(r.date))+'</td>'+
+      '<td style="padding:8px 0;border-bottom:1px solid #eee">'+escapeHtml(r.playerName)+'</td>'+
+      '<td style="padding:8px 0;border-bottom:1px solid #eee">'+escapeHtml(getSessionLabel(r.sessionType))+'</td>'+
+      '<td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right">€'+Number(r.amount||0).toFixed(2).replace('.',',')+'</td>'+
+    '</tr>'
+  ).join('');
+
+  body.innerHTML=
+    '<div class="credits" style="margin-bottom:16px">'+
+      '<div class="credit"><strong>'+status.count+'</strong><span>doorverwijzingen</span></div>'+
+      '<div class="credit"><strong>€'+Number(status.total||0).toFixed(2).replace('.',',')+'</strong><span>totaal tegoed</span></div>'+
+    '</div>'+
+    (rows
+      ? '<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr>'+
+          '<th style="text-align:left;padding:8px 0;border-bottom:2px solid #111">Datum</th>'+
+          '<th style="text-align:left;padding:8px 0;border-bottom:2px solid #111">Nieuwe speler</th>'+
+          '<th style="text-align:left;padding:8px 0;border-bottom:2px solid #111">Programma</th>'+
+          '<th style="text-align:right;padding:8px 0;border-bottom:2px solid #111">Bedrag</th>'+
+        '</tr></thead><tbody>'+rows+'</tbody></table>'
+      : '<div class="empty">Nog geen doorverwijzingen ontvangen.</div>');
 }
 
 function sendVerificationCode(){
@@ -932,8 +990,9 @@ function verifyCode(){
     authEmail=result.email;
     b.disabled=false;b.textContent='E-mailadres verifiëren';
     rememberAuthToken_(authToken,authEmail);
-    markAuthVerifiedUI_();
-    showAuthorizedPlayers(result.players||[]);
+    markAuthVerifiedUI_(!!result.club);
+    if(result.club){ showClubDashboard_(result.club); }
+    else{ showAuthorizedPlayers(result.players||[]); }
   };
 
   // Apps Script's CacheService can have a brief write-propagation lag
