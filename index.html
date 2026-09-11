@@ -1128,6 +1128,9 @@ function selectExistingPlayer(){
   showPackageStep();
 }
 
+function gameOneAvailableCount_(gameOne){
+  return (gameOne&&gameOne.hasUpcomingDate&&!gameOne.alreadyBooked)?1:0;
+}
 function renderPlayerStatus(status){
   const c=document.getElementById('playerStatus');
   if(!status){c.innerHTML='';hideCheckoutWidget_();return;}
@@ -1136,6 +1139,7 @@ function renderPlayerStatus(status){
     <div class="credit"><strong>${status.credits['7AM Club']}</strong><span>7AM Club sessies</span></div>
     <div class="credit"><strong>${status.credits['Talent']}</strong><span>Talent sessies</span></div>
     <div class="credit"><strong>${status.credits['IDP']}</strong><span>IDP sessies</span></div>
+    <div class="credit"><strong>${gameOneAvailableCount_(status.gameOne)}</strong><span>Game1.AI Testing</span></div>
   </div>${riseTegoed>0?'<div style="margin-top:9px;padding:8px 10px;background:#fff3f6;border:1px solid var(--pink);border-radius:8px;font-size:13px;"><strong>Rise Credit: €'+riseTegoed.toFixed(2).replace('.',',')+'</strong> — wordt automatisch verrekend bij je volgende aankoop: sessies, kledij in de shop, of eender welk toekomstig initiatief tijdens het seizoen 2026-2027.</div>':''}</div>`;
   refreshCheckoutWidget_();
 }
