@@ -834,14 +834,14 @@ function showError(err){
 }
 function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
-// GameOne AI Testing is never booked through the normal credit-based
+// Game1.AI Testing is never booked through the normal credit-based
 // Mijn Planning calendar (it has no credit type — see
 // consumeCreditsBatch_ server-side) — it's exclusively booked through the
 // dedicated 4th Formules card (renderGameOneCard_), which calls its own
 // Included/Paid endpoints directly. Filtered out of the shared
 // `activities` array at the one place it's populated, so every filter/
 // count/render downstream never has to remember to exclude it separately.
-const GAMEONE_SESSION_TYPE_CLIENT='GameOne AI Testing';
+const GAMEONE_SESSION_TYPE_CLIENT='Game1.AI Testing';
 function filterOutGameOne_(list){
   return (Array.isArray(list)?list:[]).filter(a=>a.type!==GAMEONE_SESSION_TYPE_CLIENT);
 }
@@ -1976,7 +1976,7 @@ function renderPackages(status){
 }
 
 /*
- * GameOne AI Testing — the 4th activity box, deliberately separate from
+ * Game1.AI Testing — the 4th activity box, deliberately separate from
  * the defs.forEach loop above: it has no tiers/stepper/loose-session
  * concept, just one upcoming testing moment that's either free
  * (Included), €35 (Paid), or — most of the time, per the core business
@@ -1990,7 +1990,7 @@ function renderGameOneCard_(status){
   if(!grid) return;
   const card=document.createElement('div');
   card.className='package-card package-gameone';
-  card.innerHTML='<h3>GameOne AI Testing</h3><div class="balance">Assessment + Player Report</div><div id="gameOneCardBody"><div class="loading">Wordt geladen...</div></div>';
+  card.innerHTML='<h3>Game1.AI Testing</h3><div class="balance">Assessment + Player Report</div><div id="gameOneCardBody"><div class="loading">Wordt geladen...</div></div>';
   grid.appendChild(card);
 
   runServer('getGameOneStatus',[authToken,status.playerId],gameOneStatus=>{
@@ -2009,7 +2009,7 @@ function renderGameOneCardBody_(g){
   if(!body) return;
 
   if(!g||!g.hasUpcomingDate){
-    body.innerHTML='<div class="gameone-disclaimer">Er is momenteel geen aankomende GameOne AI Testing-datum. Je GameOne-sessie kan pas geboekt worden zodra een nieuwe testdatum bevestigd is.</div>';
+    body.innerHTML='<div class="gameone-disclaimer">Er is momenteel geen aankomende Game1.AI Testing-datum. Je GameOne-sessie kan pas geboekt worden zodra een nieuwe testdatum bevestigd is.</div>';
     return;
   }
 
