@@ -660,6 +660,7 @@ let selectedActivities=new Set();
 let selectedTypes=new Set();
 let holidaySeriesActive=false;
 let mySessionsActive=false;
+let gameOneFilterActive=false;
 let playerFormMode='register';
 let currentPlayerId='';
 let currentStatus=null;
@@ -835,12 +836,13 @@ function showError(err){
 function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
 // Game1.AI Testing is never booked through the normal credit-based
-// Mijn Planning calendar (it has no credit type — see
-// consumeCreditsBatch_ server-side) — it's exclusively booked through the
-// dedicated 4th Formules card (renderGameOneCard_), which calls its own
-// Included/Paid endpoints directly. Filtered out of the shared
-// `activities` array at the one place it's populated, so every filter/
-// count/render downstream never has to remember to exclude it separately.
+// checkbox/selection flow (it has no credit type — see
+// consumeCreditsBatch_ server-side) — it's booked through its own
+// Included/Paid endpoints (renderGameOneCardBody_ + friends), shared by
+// the Formules card and the dedicated "Game1.AI Testing" filter in Mijn
+// Planning (renderGameOnePlanningPanel_). Filtered out of the shared
+// `activities` array at the one place it's populated, so every other
+// filter/count/render downstream never has to remember to exclude it.
 const GAMEONE_SESSION_TYPE_CLIENT='Game1.AI Testing';
 function filterOutGameOne_(list){
   return (Array.isArray(list)?list:[]).filter(a=>a.type!==GAMEONE_SESSION_TYPE_CLIENT);
@@ -2004,12 +2006,13 @@ function renderGameOneCard_(status){
   });
 }
 
-function renderGameOneCardBody_(g){
-  const body=document.getElementById('gameOneCardBody');
+function renderGameOneCardBody_(g,bodyId,btnId){
+  bodyId=bodyId||'gameOneCardBody';btnId=btnId||'gameOneBookBtn';
+  const body=document.getElementById(bodyId);
   if(!body) return;
 
   if(!g||!g.hasUpcomingDate){
-    body.innerHTML='<div class="gameone-disclaimer">Er is momenteel geen aankomende Game1.AI Testing-datum. Je GameOne-sessie kan pas geboekt worden zodra een nieuwe testdatum bevestigd is.</div>';
+    body.innerHTML='<div class="gameone-disclaimer">Er is momenteel geen aankomende Game1.AI Testing-datum. Je Game1.AI Testing-sessie kan pas geboekt worden zodra een nieuwe testdatum bevestigd is.</div>';
     return;
   }
 
@@ -2027,27 +2030,28 @@ function renderGameOneCardBody_(g){
     body.innerHTML=
       '<div class="gameone-badge included">Inbegrepen</div>'+
       '<div class="gameone-date">'+dateLabel+'</div>'+
-      '<button type="button" class="primary" id="gameOneBookBtn" style="width:100%">Boek nu — inbegrepen</button>';
-    document.getElementById('gameOneBookBtn').addEventListener('click',bookIncludedGameOneClick_);
+      '<button type="button" class="primary" id="'+btnId+'" style="width:100%">Boek nu — inbegrepen</button>';
+    document.getElementById(btnId).addEventListener('click',()=>bookIncludedGameOneClick_(bodyId,btnId));
     return;
   }
 
   body.innerHTML=
     '<div class="gameone-badge paid">€'+g.price+'</div>'+
     '<div class="gameone-date">'+dateLabel+'</div>'+
-    '<button type="button" class="primary" id="gameOneBookBtn" style="width:100%">Koop nu — €'+g.price+'</button>'+
+    '<button type="button" class="primary" id="'+btnId+'" style="width:100%">Koop nu — €'+g.price+'</button>'+
     '<div class="gameone-credit-note">Ontvang €20 korting op je volgende pakket van 5 of meer IDP Sessions.</div>';
-  document.getElementById('gameOneBookBtn').addEventListener('click',purchaseGameOneClick_);
+  document.getElementById(btnId).addEventListener('click',()=>purchaseGameOneClick_(bodyId,btnId));
 }
 
-function bookIncludedGameOneClick_(){
+function bookIncludedGameOneClick_(bodyId,btnId){
+  bodyId=bodyId||'gameOneCardBody';btnId=btnId||'gameOneBookBtn';
   if(!currentGameOneStatus||!currentGameOneStatus.activity||!currentPlayerId) return;
-  const btn=document.getElementById('gameOneBookBtn');
+  const btn=document.getElementById(btnId);
   if(btn){btn.disabled=true;btn.textContent='Bezig met boeken...';}
   runServer('bookIncludedGameOne',[authToken,currentPlayerId,currentGameOneStatus.activity.id],()=>{
     runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
       currentGameOneStatus=gs;
-      renderGameOneCardBody_(gs);
+      renderGameOneCardBody_(gs,bodyId,btnId);
     },()=>{});
     refreshCheckoutWidget_();
     runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
@@ -2057,9 +2061,10 @@ function bookIncludedGameOneClick_(){
   });
 }
 
-function purchaseGameOneClick_(){
+function purchaseGameOneClick_(bodyId,btnId){
+  bodyId=bodyId||'gameOneCardBody';btnId=btnId||'gameOneBookBtn';
   if(!currentGameOneStatus||!currentGameOneStatus.activity||!currentPlayerId) return;
-  const btn=document.getElementById('gameOneBookBtn');
+  const btn=document.getElementById(btnId);
   const originalLabel=btn?btn.textContent:'';
   if(btn){btn.disabled=true;btn.textContent='Bezig met verwerken...';}
   runServer('purchaseGameOneTestingBooking',[authToken,currentPlayerId,currentGameOneStatus.activity.id,'Open'],result=>{
@@ -2068,7 +2073,7 @@ function purchaseGameOneClick_(){
     }
     runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
       currentGameOneStatus=gs;
-      renderGameOneCardBody_(gs);
+      renderGameOneCardBody_(gs,bodyId,btnId);
     },()=>{});
     refreshCheckoutWidget_();
     loadPaymentSummary();
@@ -2221,13 +2226,13 @@ function goPackagesForward(){
 }
 
 function renderFilters(){
-  const filters=[['MINE','Mijn sessies'],['ALL','Alle sessies'],['7AM Club','7AM Club'],['Talent','Talent Sessions'],['IDP','IDP Sessions'],['HOLIDAY','Holiday Series']];
+  const filters=[['MINE','Mijn sessies'],['ALL','Alle sessies'],['7AM Club','7AM Club'],['Talent','Talent Sessions'],['IDP','IDP Sessions'],['HOLIDAY','Holiday Series'],['GAMEONE','Game1.AI Testing']];
   const c=document.getElementById('filters');c.innerHTML='';
   const themeClass={'7AM Club':'filter-7am',Talent:'filter-talent',IDP:'filter-idp'};
   filters.forEach(([value,label])=>{
     const b=document.createElement('button');
     b.className='filter-button'+(value==='MINE'?' mine-filter':'')+(themeClass[value]?' '+themeClass[value]:'');
-    let active=value==='MINE'?mySessionsActive:value==='ALL'?(selectedTypes.size===0&&!holidaySeriesActive&&!mySessionsActive):value==='HOLIDAY'?holidaySeriesActive:selectedTypes.has(value);
+    let active=value==='MINE'?mySessionsActive:value==='ALL'?(selectedTypes.size===0&&!holidaySeriesActive&&!mySessionsActive&&!gameOneFilterActive):value==='HOLIDAY'?holidaySeriesActive:value==='GAMEONE'?gameOneFilterActive:selectedTypes.has(value);
     if(active)b.classList.add('active');
     b.textContent=label;
     b.onclick=()=>handleFilter(value);
@@ -2273,10 +2278,11 @@ function renderCreditsSidebar(){
   if(inline) inline.innerHTML='<div class="credits-inline-title">Mijn resterende sessies</div><div class="credits-inline-row">'+boxesHtml+'</div>';
 }
 function handleFilter(filter){
-  if(filter==='MINE'){mySessionsActive=!mySessionsActive;selectedTypes.clear();holidaySeriesActive=false;}
-  else if(filter==='ALL'){selectedTypes.clear();holidaySeriesActive=false;mySessionsActive=false;}
-  else if(filter==='HOLIDAY'){holidaySeriesActive=!holidaySeriesActive;mySessionsActive=false;}
-  else{mySessionsActive=false;if(selectedTypes.has(filter)){selectedTypes.delete(filter);}else{selectedTypes.add(filter);}}
+  if(filter==='MINE'){mySessionsActive=!mySessionsActive;selectedTypes.clear();holidaySeriesActive=false;gameOneFilterActive=false;}
+  else if(filter==='ALL'){selectedTypes.clear();holidaySeriesActive=false;mySessionsActive=false;gameOneFilterActive=false;}
+  else if(filter==='HOLIDAY'){holidaySeriesActive=!holidaySeriesActive;mySessionsActive=false;gameOneFilterActive=false;}
+  else if(filter==='GAMEONE'){gameOneFilterActive=!gameOneFilterActive;mySessionsActive=false;holidaySeriesActive=false;selectedTypes.clear();}
+  else{mySessionsActive=false;gameOneFilterActive=false;if(selectedTypes.has(filter)){selectedTypes.delete(filter);}else{selectedTypes.add(filter);}}
   renderFilters();renderCalendar();
 }
 function isHolidayActivity(a){return String(a.series||'').trim().toLowerCase()==='holiday series';}
@@ -2300,7 +2306,26 @@ function getBookingsByActivityId_(){
   (currentStatus&&currentStatus.bookings||[]).forEach(b=>{ if(b.activityId) map[String(b.activityId)]=b; });
   return map;
 }
+function renderGameOnePlanningPanel_(){
+  const container=document.getElementById('calendar');
+  container.innerHTML='<div class="date-group"><div class="date-header"><div class="date-title">Game1.AI Testing</div></div><div id="planningGameOneBody"><div class="loading">Wordt geladen...</div></div></div>';
+  updateSelection();
+  if(!authToken||!currentPlayerId){
+    const body=document.getElementById('planningGameOneBody');
+    if(body) body.innerHTML='<div class="gameone-disclaimer">Selecteer eerst een speler.</div>';
+    return;
+  }
+  runServer('getGameOneStatus',[authToken,currentPlayerId],status=>{
+    currentGameOneStatus=status;
+    renderGameOneCardBody_(status,'planningGameOneBody','planningGameOneBookBtn');
+  },err=>{
+    const body=document.getElementById('planningGameOneBody');
+    if(body) body.innerHTML='<div class="gameone-disclaimer">Kon Game1.AI Testing-status niet laden.</div>';
+    console.warn('GameOne planning status kon niet worden geladen:',err);
+  });
+}
 function renderCalendar(){
+  if(gameOneFilterActive){renderGameOnePlanningPanel_();return;}
   const container=document.getElementById('calendar');const filtered=getFilteredActivities();
   if(!filtered.length){
     container.innerHTML='<div class="empty">'+(mySessionsActive?'Je hebt nog geen geplande sessies.':TEKST.noTraining)+'</div>';
