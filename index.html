@@ -756,7 +756,19 @@ function requestFinished_(){
   }
 }
 
-function runServerJSONP_(method,args,onSuccess,onError,timeoutMs){
+// Apps Script Web Apps occasionally drop an individual request outright
+// (Google-side transient "unable to open the file" style failure, not a
+// bug in our code — confirmed by hitting the deployed endpoint directly
+// and seeing it fail once out of three otherwise-identical calls). A
+// network-level failure or a full timeout is therefore retried silently a
+// couple of times before it's ever shown to the user; a genuine response
+// from the server (including a business-logic error like a wrong OTP
+// code) is never retried, since retrying that would just burn the
+// caller's limited attempt count for no reason.
+const JSONP_TRANSIENT_RETRIES_=2;
+const JSONP_RETRY_DELAY_MS_=400;
+function runServerJSONP_(method,args,onSuccess,onError,timeoutMs,retriesLeft){
+  if(retriesLeft===undefined) retriesLeft=JSONP_TRANSIENT_RETRIES_;
   const callbackName='riseCb_'+(jsonpCallbackCounter_++)+'_'+Date.now();
   let finished=false;
   let timer;
@@ -770,11 +782,19 @@ function runServerJSONP_(method,args,onSuccess,onError,timeoutMs){
     requestFinished_();
   };
 
+  const retryOrFail=err=>{
+    if(retriesLeft>0){
+      setTimeout(()=>runServerJSONP_(method,args,onSuccess,onError,timeoutMs,retriesLeft-1),JSONP_RETRY_DELAY_MS_);
+    }else{
+      onError(err);
+    }
+  };
+
   timer=setTimeout(()=>{
     if(finished)return;
     finished=true;
     cleanup();
-    onError(new Error('De server heeft te lang nodig om te antwoorden. Probeer opnieuw.'));
+    retryOrFail(new Error('De server heeft te lang nodig om te antwoorden. Probeer opnieuw.'));
   },timeoutMs||25000);
 
   window[callbackName]=response=>{
@@ -799,7 +819,7 @@ function runServerJSONP_(method,args,onSuccess,onError,timeoutMs){
     if(finished)return;
     finished=true;
     cleanup();
-    onError(new Error('Kon geen verbinding maken met de server.'));
+    retryOrFail(new Error('Kon geen verbinding maken met de server.'));
   };
   console.log('[DEBUG] runServerJSONP_: dispatching', method, args);
   document.body.appendChild(tag);
@@ -835,21 +855,20 @@ function showError(err){
 }
 function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
-// Game1.AI Testing is never booked through the normal credit-based
-// checkbox/selection flow (it has no credit type — see
-// consumeCreditsBatch_ server-side) — it's booked through its own
-// Included/Paid endpoints (renderGameOneCardBody_ + friends), shared by
-// the Formules card and the dedicated "Game1.AI Testing" filter in Mijn
-// Planning (renderGameOnePlanningPanel_). Filtered out of the shared
-// `activities` array at the one place it's populated, so every other
-// filter/count/render downstream never has to remember to exclude it.
+// Game1.AI Testing is a normal part of `activities` — it shows up in
+// Alle/Mijn sessies, groups by date, and (once booked) cancels through the
+// same generic bookingsMap/cancelBooking path as any other session type,
+// since its REGISTRATIONS rows use the exact same shape. It still never
+// goes through the credit-based checkbox/selection flow though (it has no
+// credit type — see consumeCreditsBatch_ server-side): booking it always
+// happens through its own Included/Paid endpoints (renderGameOneCardBody_
+// / fillGameOneBody_ + friends), reused by the Formules card, the
+// dedicated "Game1.AI Testing" filter in Mijn Planning
+// (renderGameOnePlanningPanel_), and inline calendar cards (renderCalendar()).
 const GAMEONE_SESSION_TYPE_CLIENT='Game1.AI Testing';
-function filterOutGameOne_(list){
-  return (Array.isArray(list)?list:[]).filter(a=>a.type!==GAMEONE_SESSION_TYPE_CLIENT);
-}
 
 function loadPage(){
-  runServer('getCalendar',undefined,data=>{activities=filterOutGameOne_(data);},showError);
+  runServer('getCalendar',undefined,data=>{activities=Array.isArray(data)?data:[];},showError);
   attemptResumeSession_();
 }
 
@@ -2010,11 +2029,19 @@ function renderGameOneCard_(status){
   });
 }
 
+// bodyId-based wrapper for the two named, static cards (Formules /
+// planningGameOneBody) — resolves the id to a live element, then delegates
+// to fillGameOneBody_, which works on a plain element reference and so
+// also serves an inline calendar-card GameOne entry that isn't attached to
+// the document yet at the moment it's first built (see renderCalendar()).
 function renderGameOneCardBody_(g,bodyId,btnId){
   bodyId=bodyId||'gameOneCardBody';btnId=btnId||'gameOneBookBtn';
   const body=document.getElementById(bodyId);
   if(!body) return;
+  fillGameOneBody_(body,btnId,g);
+}
 
+function fillGameOneBody_(body,btnId,g){
   if(!g||!g.hasUpcomingDate){
     body.innerHTML='<div class="gameone-disclaimer">Er is momenteel geen aankomende Game1.AI Testing-datum. Je Game1.AI Testing-sessie kan pas geboekt worden zodra een nieuwe testdatum bevestigd is.</div>';
     return;
@@ -2026,7 +2053,15 @@ function renderGameOneCardBody_(g,bodyId,btnId){
   if(g.alreadyBooked){
     body.innerHTML=
       '<div class="gameone-badge included">Geboekt</div>'+
-      '<div class="gameone-date">'+dateLabel+'</div>';
+      '<div class="gameone-date">'+dateLabel+'</div>'+
+      (g.registrationId?'<button type="button" class="danger session-cancel" id="'+btnId+'" style="width:100%;margin-top:6px">Annuleren</button>':'');
+    const cancelEl=body.querySelector('#'+btnId);
+    if(cancelEl){
+      cancelEl.addEventListener('click',e=>{
+        e.stopPropagation();
+        cancelBooking({id:g.registrationId,type:GAMEONE_SESSION_TYPE_CLIENT},g.activity,cancelEl);
+      });
+    }
     return;
   }
 
@@ -2035,7 +2070,7 @@ function renderGameOneCardBody_(g,bodyId,btnId){
       '<div class="gameone-badge included">Inbegrepen</div>'+
       '<div class="gameone-date">'+dateLabel+'</div>'+
       '<button type="button" class="primary" id="'+btnId+'" style="width:100%">Boek nu — inbegrepen</button>';
-    document.getElementById(btnId).addEventListener('click',()=>bookIncludedGameOneClick_(bodyId,btnId));
+    body.querySelector('#'+btnId).addEventListener('click',e=>{e.stopPropagation();bookIncludedGameOneClick_(body,btnId);});
     return;
   }
 
@@ -2044,20 +2079,22 @@ function renderGameOneCardBody_(g,bodyId,btnId){
     '<div class="gameone-date">'+dateLabel+'</div>'+
     '<button type="button" class="primary" id="'+btnId+'" style="width:100%">Koop nu — €'+g.price+'</button>'+
     '<div class="gameone-credit-note">Ontvang €20 korting op je volgende pakket van 5 of meer IDP Sessions.</div>';
-  document.getElementById(btnId).addEventListener('click',()=>purchaseGameOneClick_(bodyId,btnId));
+  body.querySelector('#'+btnId).addEventListener('click',e=>{e.stopPropagation();purchaseGameOneClick_(body,btnId);});
 }
 
-function bookIncludedGameOneClick_(bodyId,btnId){
-  bodyId=bodyId||'gameOneCardBody';btnId=btnId||'gameOneBookBtn';
+function bookIncludedGameOneClick_(body,btnId){
   if(!currentGameOneStatus||!currentGameOneStatus.activity||!currentPlayerId) return;
-  const btn=document.getElementById(btnId);
+  const btn=body.querySelector('#'+btnId);
   if(btn){btn.disabled=true;btn.textContent='Bezig met boeken...';}
   runServer('bookIncludedGameOne',[authToken,currentPlayerId,currentGameOneStatus.activity.id],()=>{
     runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
       currentGameOneStatus=gs;
-      renderGameOneCardBody_(gs,bodyId,btnId);
+      fillGameOneBody_(body,btnId,gs);
     },()=>{});
     refreshCheckoutWidget_();
+    // The merged Alle/Mijn sessies calendar view and the credits/status box
+    // both need to know about this booking too, not just this one card.
+    refreshStatusAndCalendarSafe_();
     runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
   },err=>{
     if(btn){btn.disabled=false;btn.textContent='Boek nu — inbegrepen';}
@@ -2065,10 +2102,9 @@ function bookIncludedGameOneClick_(bodyId,btnId){
   });
 }
 
-function purchaseGameOneClick_(bodyId,btnId){
-  bodyId=bodyId||'gameOneCardBody';btnId=btnId||'gameOneBookBtn';
+function purchaseGameOneClick_(body,btnId){
   if(!currentGameOneStatus||!currentGameOneStatus.activity||!currentPlayerId) return;
-  const btn=document.getElementById(btnId);
+  const btn=body.querySelector('#'+btnId);
   const originalLabel=btn?btn.textContent:'';
   if(btn){btn.disabled=true;btn.textContent='Bezig met verwerken...';}
   runServer('purchaseGameOneTestingBooking',[authToken,currentPlayerId,currentGameOneStatus.activity.id,'Open'],result=>{
@@ -2077,10 +2113,11 @@ function purchaseGameOneClick_(bodyId,btnId){
     }
     runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
       currentGameOneStatus=gs;
-      renderGameOneCardBody_(gs,bodyId,btnId);
+      fillGameOneBody_(body,btnId,gs);
     },()=>{});
     refreshCheckoutWidget_();
     loadPaymentSummary();
+    refreshStatusAndCalendarSafe_();
     runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
   },err=>{
     if(btn){btn.disabled=false;btn.textContent=originalLabel;}
@@ -2410,6 +2447,21 @@ function renderCalendar(){
           else joinWaitlistFor_(activity.id,wlBtn);
         });
         session.appendChild(wlBtn);
+      }else if(activity.type===GAMEONE_SESSION_TYPE_CLIENT){
+        // Booking it still needs its own Included/Paid business rules, not
+        // a plain checkbox — the "already booked" case above already
+        // covers cancelling generically. currentStatus.gameOne only
+        // describes the single soonest activity — a later, not-yet-current
+        // GameOne date (a rare, currently theoretical case) shows a plain
+        // note instead.
+        const holder=document.createElement('div');holder.style.width='100%';
+        session.appendChild(holder);
+        const g=currentStatus&&currentStatus.gameOne;
+        if(g&&g.activity&&String(g.activity.id)===String(activity.id)){
+          fillGameOneBody_(holder,'gameOneInlineBtn_'+activity.id,g);
+        }else{
+          holder.innerHTML='<div class="gameone-disclaimer">Nog niet boekbaar.</div>';
+        }
       }else{
         const cb=document.createElement('input');cb.type='checkbox';cb.className='session-check';cb.checked=selectedActivities.has(activity.id);cb.addEventListener('change',e=>toggleActivity(activity.id,e.target.checked));session.appendChild(cb);
         session.addEventListener('click',e=>{if(e.target===cb)return;cb.checked=!cb.checked;toggleActivity(activity.id,cb.checked);});
@@ -2526,6 +2578,7 @@ function confirmCancelBooking_(){
 
   runServer('cancelRegistration',[authToken,currentPlayerId,regId],result=>{
     refreshStatusAndCalendarSafe_();
+    refreshGameOneCardIfPresent_();
     // Admin overview rebuild is slow and not needed for the customer-facing
     // response — run it in the background, same pattern used elsewhere.
     runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
@@ -2533,8 +2586,21 @@ function confirmCancelBooking_(){
     // The cancellation did not actually happen — resync with the server's
     // real state, which undoes the optimistic guess above.
     refreshStatusAndCalendarSafe_();
+    refreshGameOneCardIfPresent_();
     showError(err);
   });
+}
+// Cancelling a Game1.AI Testing booking can happen from the Formules
+// card, which refreshStatusAndCalendarSafe_() (Mijn Planning-only) never
+// touches — re-fetch and re-render it directly so it doesn't keep showing
+// a stale "Geboekt"/Annuleren state after the cancel completes.
+function refreshGameOneCardIfPresent_(){
+  if(!document.getElementById('gameOneCardBody')) return;
+  if(!authToken||!currentPlayerId) return;
+  runServer('getGameOneStatus',[authToken,currentPlayerId],status=>{
+    currentGameOneStatus=status;
+    renderGameOneCardBody_(status);
+  },()=>{});
 }
 function showBookingMessage(text,type){document.getElementById('bookingMessage').innerHTML='<div class="message '+type+'">'+escapeHtml(text)+'</div>';}
 function showSelectionMessage(text,type){document.getElementById('selectionMessage').innerHTML=text?('<div class="selection-message '+type+'">'+escapeHtml(text)+'</div>'):'';}
@@ -3056,7 +3122,7 @@ function refreshStatusAndCalendarSafe_(){
   });
 
   runServer('getCalendar',undefined,data=>{
-    activities=filterOutGameOne_(data);
+    activities=Array.isArray(data)?data:[];
     renderCalendar();
     updateSelection();
   },err=>{
