@@ -1057,8 +1057,18 @@ function verifyCode(){
   // on a code that's actually only seconds old. One silent, short-delay
   // retry absorbs that without ever bothering the customer; a genuinely
   // expired (10 min old) or wrong code still fails normally on the retry.
+  //
+  // Deliberately runServerNoRetry, not runServer: verifyEmailCode is NOT
+  // idempotent — a correct code is consumed (cache.remove) the moment it
+  // succeeds server-side, before the response even makes it back. If the
+  // transport layer's own transient-network retry (runServer's default)
+  // silently re-sent this exact call after a dropped response from an
+  // already-successful attempt, the resend would always find the code
+  // "already used" and report it as expired — turning a real (if
+  // temporarily unconfirmed) success into a visible, confusing "expired"
+  // error on a code that was actually correct.
   const attemptVerify=isRetry=>{
-    runServer('verifyEmailCode',[authChallengeId,code],onSuccess,err=>{
+    runServerNoRetry('verifyEmailCode',[authChallengeId,code],onSuccess,err=>{
       const msg=err&&err.message?err.message:'';
       if(!isRetry&&/verlopen/i.test(msg)){
         setTimeout(()=>attemptVerify(true),900);
@@ -2138,7 +2148,11 @@ function bookIncludedGameOneClick_(body,btnId){
   // the same visit is recognised, instead of wrongly falling through to
   // "not yet eligible".
   submitPendingPackagesIfNeeded_(()=>{
-    runServer('bookIncludedGameOne',[authToken,currentPlayerId,currentGameOneStatus.activity.id],()=>{
+    // runServerNoRetry: a successful booking is a one-shot write (the
+    // server hard-blocks a second one as "already booked") — a transport
+    // retry after a dropped success response would surface that block as
+    // a confusing error on a booking that actually went through.
+    runServerNoRetry('bookIncludedGameOne',[authToken,currentPlayerId,currentGameOneStatus.activity.id],()=>{
       runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
         currentGameOneStatus=gs;
         fillGameOneBody_(body,btnId,gs);
@@ -2181,7 +2195,8 @@ function purchaseGameOneClick_(body,btnId){
         bookIncludedGameOneClick_(body,btnId);
         return;
       }
-      runServer('purchaseGameOneTestingBooking',[authToken,currentPlayerId,activityId,'Open'],result=>{
+      // Same reasoning as bookIncludedGameOne just above.
+      runServerNoRetry('purchaseGameOneTestingBooking',[authToken,currentPlayerId,activityId,'Open'],result=>{
         if(result&&result.orderId){
           pendingPackageOrderIdsForEmail=pendingPackageOrderIdsForEmail.concat([result.orderId]);
         }
