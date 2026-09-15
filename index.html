@@ -2131,16 +2131,27 @@ function bookIncludedGameOneClick_(body,btnId){
   if(!currentGameOneStatus||!currentGameOneStatus.activity||!currentPlayerId) return;
   const btn=body.querySelector('#'+btnId);
   if(btn){btn.disabled=true;btn.textContent='Bezig met boeken...';}
-  runServer('bookIncludedGameOne',[authToken,currentPlayerId,currentGameOneStatus.activity.id],()=>{
-    runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
-      currentGameOneStatus=gs;
-      fillGameOneBody_(body,btnId,gs);
-    },()=>{});
-    refreshCheckoutWidget_();
-    // The merged Alle/Mijn sessies calendar view and the credits/status box
-    // both need to know about this booking too, not just this one card.
-    refreshStatusAndCalendarSafe_();
-    runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
+  // Included-eligibility (5+ Talent or IDP) is checked server-side against
+  // real orders — a quantity still sitting in the Formules stepper doesn't
+  // count yet. Flush any pending selection first (a no-op if there isn't
+  // one) so picking e.g. 20 IDP and immediately clicking this button in
+  // the same visit is recognised, instead of wrongly falling through to
+  // "not yet eligible".
+  submitPendingPackagesIfNeeded_(()=>{
+    runServer('bookIncludedGameOne',[authToken,currentPlayerId,currentGameOneStatus.activity.id],()=>{
+      runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
+        currentGameOneStatus=gs;
+        fillGameOneBody_(body,btnId,gs);
+      },()=>{});
+      refreshCheckoutWidget_();
+      // The merged Alle/Mijn sessies calendar view and the credits/status box
+      // both need to know about this booking too, not just this one card.
+      refreshStatusAndCalendarSafe_();
+      runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
+    },err=>{
+      if(btn){btn.disabled=false;btn.textContent='Boek nu — inbegrepen';}
+      showError(err);
+    });
   },err=>{
     if(btn){btn.disabled=false;btn.textContent='Boek nu — inbegrepen';}
     showError(err);
@@ -2152,20 +2163,46 @@ function purchaseGameOneClick_(body,btnId){
   const btn=body.querySelector('#'+btnId);
   const originalLabel=btn?btn.textContent:'';
   if(btn){btn.disabled=true;btn.textContent='Bezig met verwerken...';}
-  runServer('purchaseGameOneTestingBooking',[authToken,currentPlayerId,currentGameOneStatus.activity.id,'Open'],result=>{
-    if(result&&result.orderId){
-      pendingPackageOrderIdsForEmail=pendingPackageOrderIdsForEmail.concat([result.orderId]);
-    }
+  const activityId=currentGameOneStatus.activity.id;
+  const resetBtn=()=>{ if(btn){btn.disabled=false;btn.textContent=originalLabel;} };
+  // Flush any pending Formules selection first — Included-eligibility (5+
+  // Talent or IDP) is checked server-side against real orders, and a
+  // quantity still sitting in the stepper doesn't count yet. Then re-check
+  // status fresh: a customer who just picked 5+ Talent/IDP sessions and
+  // clicked "Koop nu" in the same visit is now actually eligible for the
+  // free Included path — route them there instead of charging €35 (the
+  // server would otherwise correctly refuse the paid purchase for an
+  // eligible player, which would surface as an error instead of just
+  // booking them for free).
+  submitPendingPackagesIfNeeded_(()=>{
     runServer('getGameOneStatus',[authToken,currentPlayerId],gs=>{
       currentGameOneStatus=gs;
-      fillGameOneBody_(body,btnId,gs);
-    },()=>{});
-    refreshCheckoutWidget_();
-    loadPaymentSummary();
-    refreshStatusAndCalendarSafe_();
-    runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
+      if(gs&&gs.includedEligible&&!gs.alreadyBooked){
+        bookIncludedGameOneClick_(body,btnId);
+        return;
+      }
+      runServer('purchaseGameOneTestingBooking',[authToken,currentPlayerId,activityId,'Open'],result=>{
+        if(result&&result.orderId){
+          pendingPackageOrderIdsForEmail=pendingPackageOrderIdsForEmail.concat([result.orderId]);
+        }
+        runServer('getGameOneStatus',[authToken,currentPlayerId],gs2=>{
+          currentGameOneStatus=gs2;
+          fillGameOneBody_(body,btnId,gs2);
+        },()=>{});
+        refreshCheckoutWidget_();
+        loadPaymentSummary();
+        refreshStatusAndCalendarSafe_();
+        runServer('updateBookingOverview',undefined,()=>{},err=>console.warn('Booking-overzicht kon niet worden vernieuwd:',err));
+      },err=>{
+        resetBtn();
+        showError(err);
+      });
+    },err=>{
+      resetBtn();
+      showError(err);
+    });
   },err=>{
-    if(btn){btn.disabled=false;btn.textContent=originalLabel;}
+    resetBtn();
     showError(err);
   });
 }
