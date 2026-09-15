@@ -101,10 +101,10 @@
        inside each confirmed box. Fixed top-right on wide/medium screens;
        folds into the normal page flow (a slim inline card) on narrow
        screens where a fixed box would collide with the stepbar. */
-    .checkout-widget{position:fixed;top:82px;right:16px;width:200px;z-index:105;background:#fff;color:var(--black);border:2px solid #000;border-radius:14px;padding:10px 12px;box-shadow:0 4px 14px rgba(0,0,0,.16)}
-    .checkout-widget-button{width:100%;padding:9px 8px;border:2px solid #000;border-radius:24px;background:#000;color:#fff;font-weight:bold;font-size:13px;cursor:pointer}
+    .checkout-widget{position:fixed;top:82px;right:16px;width:160px;z-index:105;background:#fff;color:var(--black);border:2px solid #000;border-radius:12px;padding:8px 10px;box-shadow:0 4px 14px rgba(0,0,0,.16)}
+    .checkout-widget-button{width:100%;padding:7px 8px;border:2px solid #000;border-radius:20px;background:#000;color:#fff;font-weight:bold;font-size:12px;cursor:pointer}
     .checkout-widget-button:disabled{opacity:.5;cursor:not-allowed}
-    .checkout-widget-summary{margin-top:8px;font-size:11px;line-height:1.6;color:#333}
+    .checkout-widget-summary{margin-top:6px;font-size:10px;line-height:1.5;color:#333}
     .checkout-widget-row{display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
     .checkout-widget-row span{opacity:.75}
     /* Used to fall back to position:static (scrolling away with the page)
@@ -131,7 +131,7 @@
          capped height with its own internal scroll so it can never grow
          tall enough to swallow the whole screen even with every section
          (Formules/Shop/Planning/Geannuleerd) pending at once. */
-      .checkout-widget{position:fixed;top:80px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:170px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+      .checkout-widget{position:fixed;top:80px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:130px;padding:7px 10px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
       /* Package/clothing cards already stack single-column above — this is
          the readability/touch-target pass on top: bigger text, roomier
          buttons, and no more dead space in short package cards now that
@@ -204,7 +204,7 @@
     html.force-mobile .booking-confirmation{left:12px;right:12px;bottom:205px}
     html.force-mobile .credits-inline-row{gap:6px}html.force-mobile .credits-inline-row .credits-sidebar-box{padding:10px 4px}html.force-mobile .credits-inline-row .credits-sidebar-count{font-size:22px}html.force-mobile .credits-inline-row .credits-sidebar-label{font-size:10px;line-height:1.2}
     html.force-mobile .confirmed-actions{flex-direction:column}html.force-mobile .confirmed-actions>button{flex-basis:auto}
-    html.force-mobile .checkout-widget{position:fixed;top:80px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:170px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    html.force-mobile .checkout-widget{position:fixed;top:80px;left:8px;right:8px;width:auto;max-width:none;margin:0;max-height:130px;padding:7px 10px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.25)}
     html.force-mobile .panel{padding:16px}
     html.force-mobile h2{font-size:19px}
     html.force-mobile .intro{font-size:15px;line-height:1.5}
@@ -358,6 +358,14 @@
 }
 .checkout-overview-row:last-of-type{border-bottom:0}
 .checkout-overview-row .cor-label{flex:1}
+/* Lets a customer amend a pending package order directly from Formules
+   (increase/decrease) instead of having to leave for the Check-out
+   overview just to remove it, then come back to re-select a new quantity.
+   currentColor/inherit so it reads correctly on every card theme (dark
+   7AM Club, light Talent/IDP) without a separate rule per card. */
+.package-open-order{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:7px 10px;border:1.5px solid currentColor;border-radius:8px;font-size:11px;opacity:.95}
+.package-open-order-remove{border:0;background:none;color:inherit;font-size:16px;font-weight:bold;line-height:1;cursor:pointer;flex-shrink:0;opacity:.8;padding:0}
+.package-open-order-remove:hover{opacity:1}
 .checkout-overview-remove{
   border:0;
   background:none;
@@ -617,7 +625,6 @@
     <div class="selection-inner">
       <div>
         <div class="selection-count" id="selectionCount">0 sessies geselecteerd</div>
-        <div class="selection-list" id="selectionList"></div>
         <div id="selectionMessage"></div>
       </div>
       <div class="selection-actions step-nav">
@@ -833,6 +840,18 @@ function runServer(method,args,success,error){
 function runServerWithTimeout(method,args,success,error,timeoutMs){
   const fail=error||showError;
   runServerJSONP_(method,args,result=>{try{success(result);}catch(e){fail(e);}},fail,timeoutMs);
+}
+
+// For actions that are NOT safe to silently repeat — e.g. sending an email.
+// The transient-retry logic in runServerJSONP_ assumes the server either
+// didn't run at all or is safe to re-run; that's false for something like
+// sendConsolidatedConfirmationEmail, where the server can have already
+// fully executed (mail sent) even though the JSONP response back to the
+// browser was the thing that actually timed out/dropped — a silent retry
+// there would just send the same email a second time.
+function runServerNoRetry(method,args,success,error,timeoutMs){
+  const fail=error||showError;
+  runServerJSONP_(method,args,result=>{try{success(result);}catch(e){fail(e);}},fail,timeoutMs||25000,0);
 }
 function showError(err){
   const msg=err&&err.message?err.message:String(err||'Er ging iets mis.');
@@ -1286,7 +1305,7 @@ function renderPaymentSummary(summary){
   let sections='';
   if(total>0){
     sections+='<div class="payment-outstanding-section">'+
-      '<div class="payment-outstanding-label">Formules</div>'+
+      '<div class="payment-outstanding-label">'+escapeHtml(summary.referenceLabel||'Formules')+'</div>'+
       '<div class="payment-total">€'+total.toFixed(2).replace('.',',')+'</div>'+
       '<div class="payment-details">'+
         '<strong>Betaling via overschrijving</strong><br>'+
@@ -1575,6 +1594,17 @@ function showPackageStep(){
     document.getElementById('clothingNote').innerHTML='';
     document.getElementById('packagePaymentPreview').innerHTML='<div class="payment-preview-empty">Je gegevens worden vernieuwd...</div>';
     setPackageNavDisabled_(true);
+    // getPlayerStatus and getOutstandingPaymentSummary don't depend on each
+    // other — fired together rather than nested, and each re-renders the
+    // package cards once it lands, so renderPackages() picks up whichever
+    // arrives last with the freshest combination of the two (credits from
+    // the former, the "already ordered, not yet paid" note per card from
+    // the latter — see renderPackages()'s openOrdersForType).
+    runServer('getOutstandingPaymentSummary',[authToken,currentPlayerId],summary=>{
+      renderPaymentSummary(summary);
+      renderPackages(currentStatus);
+    },err=>console.warn('Openstaande betalingen konden niet worden vernieuwd:',err));
+
     runServer('getPlayerStatus',[authToken,currentPlayerId],fresh=>{
       currentStatus=fresh;
       renderPlayerStatus(fresh);
@@ -1840,7 +1870,22 @@ function renderPackages(status){
       const first=(type==='Talent'&&!status.hasTalent)||(type==='IDP'&&!status.hasIDP)||(type==='7AM Club'&&!status.has7AM);
       const unitPrice=packagePrice_(type,1);
 
-      card.innerHTML='<h3>'+label+'</h3><div class="balance">Huidige sessies: <strong>'+Number(credits[key]||0)+'</strong></div>';
+      // Any package of this type already ordered but not yet paid (from an
+      // earlier visit to this step this same session) — shown with its own
+      // Verwijderen so a customer can amend the quantity (e.g. 5 → 10)
+      // without leaving Formules: remove the old order here, then pick the
+      // new quantity below, instead of bouncing to Check-out just to
+      // delete a line before coming back.
+      const openOrdersForType=(currentPaymentSummary&&currentPaymentSummary.orders||[]).filter(o=>o.type===type);
+      const openOrdersHtml=openOrdersForType.map(o=>
+        '<div class="package-open-order"><span>Besteld, nog niet betaald: '+o.quantity+' '+(o.quantity===1?'sessie':'sessies')+' — €'+Number(o.total||0).toFixed(2).replace('.',',')+'</span>'+
+        '<button type="button" class="package-open-order-remove" data-remove-open-order="'+escapeHtml(o.orderId)+'" aria-label="Verwijderen">&times;</button></div>'
+      ).join('');
+
+      card.innerHTML='<h3>'+label+'</h3><div class="balance">Huidige sessies: <strong>'+Number(credits[key]||0)+'</strong></div>'+openOrdersHtml;
+      card.querySelectorAll('[data-remove-open-order]').forEach(btn=>{
+        btn.addEventListener('click',()=>removeCheckoutPackageOrder_(btn.getAttribute('data-remove-open-order')));
+      });
 
       // Grouped together, right under the balance line, so the stepper, the
       // "of" divider and the pack chips stay visually connected instead of
@@ -2474,8 +2519,14 @@ function renderCalendar(){
 }
 function toggleActivity(id,selected){if(selected)selectedActivities.add(id);else selectedActivities.delete(id);renderCalendar();}
 function updateSelection(){
+  // The fixed bottom bar used to also list every selected session inline
+  // (one line each) — with a lot of sessions selected that made the bar
+  // itself grow tall enough to cover most of a phone screen, blocking the
+  // calendar behind it. Selected sessions are already visually marked in
+  // the calendar itself (border/background — see .session.selected), so
+  // reviewing a selection is just a matter of scrolling, and the count
+  // here stays a fixed one-line height regardless of how many are picked.
   const count=selectedActivities.size;document.getElementById('selectionCount').textContent=count+' '+(count===1?TEKST.selectedOne:TEKST.selectedMany);
-  const selected=activities.filter(a=>selectedActivities.has(a.id));document.getElementById('selectionList').innerHTML=selected.map(a=>formatDate(a.date)+' · '+getSessionLabel(a.type)).join('<br>');
   renderCreditsSidebar();
 }
 
@@ -2788,6 +2839,21 @@ function removeCheckoutPackageOrder_(orderId){
     checkoutSectionConfirmed.formules=false;
     reloadCheckoutOverview_();
     refreshCheckoutWidget_();
+    // Also reachable directly from Formules now (amending a pending
+    // package order there — see renderPackages()'s open-order note), not
+    // just from the Check-out overview — if that's where we are, refresh
+    // its cards too so the removed order disappears immediately instead
+    // of only after leaving and returning to the step. Waits for the
+    // fresh outstanding-orders response before redrawing (loadPaymentSummary()
+    // itself updates currentPaymentSummary asynchronously, so calling it
+    // and redrawing right after would still redraw with the stale list).
+    const packagePanel=document.getElementById('packagePanel');
+    if(packagePanel && !packagePanel.classList.contains('hidden') && authToken && currentPlayerId){
+      runServer('getOutstandingPaymentSummary',[authToken,currentPlayerId],summary=>{
+        renderPaymentSummary(summary);
+        renderPackages(currentStatus);
+      },showError);
+    }
   },err=>showError(err));
 }
 function removeCheckoutClothingOrder_(orderId){
@@ -2887,6 +2953,7 @@ function renderCheckoutOverview_(overview){
       '<div class="credit"><strong>'+Number(credits['7AM Club']||0)+'</strong><span>7AM Club sessies</span></div>'+
       '<div class="credit"><strong>'+Number(credits['Talent']||0)+'</strong><span>Talent sessies</span></div>'+
       '<div class="credit"><strong>'+Number(credits['IDP']||0)+'</strong><span>IDP sessies</span></div>'+
+      '<div class="credit"><strong>'+gameOneAvailableCount_(overview.gameOne)+'</strong><span>Game1.AI Testing</span></div>'+
     '</div>';
     html+=checkoutSectionFooter_('planning');
     html+='</div>';
@@ -2971,7 +3038,7 @@ function confirmCheckout(){
   const btn=document.getElementById('checkoutModalConfirm');
   btn.disabled=true;
   btn.textContent='Bevestigingsmail wordt verstuurd...';
-  runServer('sendConsolidatedConfirmationEmail',[authToken,currentPlayerId,pendingPackageOrderIdsForEmail,pendingClothingOrderIdsForEmail,pendingCancelledSessionsForEmail],()=>{
+  runServerNoRetry('sendConsolidatedConfirmationEmail',[authToken,currentPlayerId,pendingPackageOrderIdsForEmail,pendingClothingOrderIdsForEmail,pendingCancelledSessionsForEmail],()=>{
     pendingPackageOrderIdsForEmail=[];
     pendingClothingOrderIdsForEmail=[];
     pendingCancelledSessionsForEmail=[];
