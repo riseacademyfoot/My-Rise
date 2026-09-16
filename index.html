@@ -3052,6 +3052,33 @@ function renderCheckoutOverview_(overview){
 function closeCheckoutModal(){document.getElementById('checkoutModal').classList.add('hidden');}
 
 /*
+ * Fetches a standard .ics file (every upcoming session, server-built —
+ * see getPlayerCalendarFile in Code.gs) and triggers a real browser
+ * download for it, so one click imports the whole planning into whatever
+ * calendar app the customer already uses, on phone or laptop.
+ */
+function downloadCalendarFile_(btn){
+  if(!authToken||!currentPlayerId) return;
+  const originalLabel=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Bezig...';}
+  runServer('getPlayerCalendarFile',[authToken,currentPlayerId],icsText=>{
+    if(btn){btn.disabled=false;btn.textContent=originalLabel;}
+    const blob=new Blob([icsText],{type:'text/calendar;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='mijn-rise-planning.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  },err=>{
+    if(btn){btn.disabled=false;btn.textContent=originalLabel;}
+    showError(err);
+  });
+}
+
+/*
  * Shown in place of the checkout overview once the confirmation email has
  * actually gone out — the visit has a clear, deliberate end point instead
  * of just fading back into the page. There's no persisted session (no
@@ -3067,8 +3094,10 @@ function showCheckoutThankYou_(){
     '</div>';
   const actions=document.getElementById('checkoutModalActions');
   actions.innerHTML=
+    '<button type="button" class="secondary" id="checkoutModalCalendar">Voeg toe aan agenda</button>'+
     '<button type="button" class="secondary" id="checkoutModalStay">Venster sluiten</button>'+
     '<button type="button" class="primary" id="checkoutModalLogout">Uitloggen</button>';
+  document.getElementById('checkoutModalCalendar').addEventListener('click',e=>downloadCalendarFile_(e.currentTarget));
   document.getElementById('checkoutModalStay').addEventListener('click',closeCheckoutModal);
   document.getElementById('checkoutModalLogout').addEventListener('click',()=>{
     // Now that a session can be remembered on this device (see
